@@ -1,12 +1,15 @@
 <script lang="ts">
 	import '../app.css';
-	import favicon from '$lib/assets/favicon.svg';
+	import ModeWatcher from '$lib/components/ModeWatcher.svelte';
+	import ThemeSwitcher from '$lib/components/ThemeSwitcher.svelte';
 
 	let { children } = $props();
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
+<ModeWatcher />
+
+<header class="absolute right-4 top-4">
+	<ThemeSwitcher />
+</header>
 
 {@render children?.()}
