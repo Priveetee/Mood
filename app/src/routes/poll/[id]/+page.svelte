@@ -5,7 +5,6 @@
 	import * as Card from '$lib/components/ui/card';
 
 	const pollId = $page.params.id;
-
 	let selectedMood: string | null = null;
 	let comment = '';
 	let isSubmitting = false;
@@ -34,7 +33,6 @@
 			entryAnimation: 'windLeftIn',
 			exitAnimation: 'windRightOut'
 		};
-
 		if (type === 'error') {
 			toast?.({
 				...baseOptions,
@@ -60,22 +58,32 @@
 			showToast('warn', 'Veuillez sélectionner une humeur.');
 			return;
 		}
-
 		isSubmitting = true;
-
-		// On simule un appel API qui réussit
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-		showToast('success', 'Merci pour votre participation !');
-
-		isSubmitting = false;
-		hasVoted = true;
+		try {
+			const response = await fetch('/api/vote', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ pollId, mood: selectedMood, comment })
+			});
+			if (response.ok) {
+				showToast('success', 'Merci pour votre participation !');
+				hasVoted = true;
+			} else {
+				const data = await response.json();
+				showToast('error', data.error || 'Une erreur est survenue.');
+			}
+		} catch {
+			showToast('error', 'Erreur de connexion au serveur.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 </script>
 
+<!-- Le reste du HTML ne change pas -->
 <svelte:head>
 	<title>Votez pour votre humeur</title>
 </svelte:head>
-
 <div class="flex min-h-screen items-center justify-center p-4">
 	<div class="w-full max-w-2xl transition-all duration-500">
 		{#if !hasVoted}
@@ -108,7 +116,6 @@
 							</button>
 						{/each}
 					</div>
-
 					<div class="mb-8">
 						<label for="comment" class="mb-2 block text-sm font-medium">
 							Laisser un commentaire (optionnel)
@@ -121,7 +128,6 @@
 							class="w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 						></textarea>
 					</div>
-
 					<button
 						type="button"
 						on:click={handleSubmit}
@@ -134,7 +140,7 @@
 			</Card.Root>
 		{:else}
 			<Card.Root class="p-12 text-center">
-				<div class="mb-4 text-6xl animate-bounce">🎉</div>
+				<div class="mb-4 text-6xl">🎉</div>
 				<Card.Title class="mb-3 text-3xl font-bold">Merci !</Card.Title>
 				<Card.Description class="text-lg">
 					Votre vote a été enregistré avec succès.
@@ -143,20 +149,3 @@
 		{/if}
 	</div>
 </div>
-
-<style>
-	@keyframes bounce {
-		0%,
-		100% {
-			transform: translateY(-25%);
-			animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-		}
-		50% {
-			transform: translateY(0);
-			animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-		}
-	}
-	.animate-bounce {
-		animation: bounce 1s infinite;
-	}
-</style>

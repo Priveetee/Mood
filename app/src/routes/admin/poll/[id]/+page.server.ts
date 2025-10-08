@@ -1,14 +1,24 @@
 import { PrismaClient } from '@prisma/client';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
 const prisma = new PrismaClient();
 
-export const load = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	const session = await locals.auth();
+	if (!session?.user) {
+		throw redirect(303, '/admin/login');
+	}
+
 	const poll = await prisma.poll.findUnique({
-		where: { id: params.id },
+		where: {
+			id: params.id
+		},
 		include: {
 			votes: {
-				orderBy: { createdAt: 'desc' }
+				orderBy: {
+					createdAt: 'desc'
+				}
 			}
 		}
 	});

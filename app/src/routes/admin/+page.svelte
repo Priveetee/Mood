@@ -3,38 +3,71 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';
+
 	let polls: any[] = [];
 	let toast: any;
+
 	onMount(async () => {
 		const module = await import('not-a-toast');
 		toast = module.default;
+		await import('not-a-toast/style.css');
 		await loadPolls();
 	});
+
+	function showToast(type: 'success' | 'error', message: string) {
+		const baseOptions = {
+			position: 'top-right',
+			orderReversed: true,
+			entryAnimation: 'windLeftIn',
+			exitAnimation: 'windRightOut'
+		};
+		if (type === 'error') {
+			toast?.({
+				...baseOptions,
+				message,
+				showIcon: true,
+				iconAnimation: 'jelly',
+				iconTimingFunction: 'ease-in-out',
+				iconBorderRadius: '50%',
+				iconType: 'error'
+			});
+		} else {
+			toast?.({ ...baseOptions, message, theme: 'dotted' });
+		}
+	}
+
 	async function loadPolls() {
 		const res = await fetch('/api/admin/polls');
 		if (res.ok) polls = (await res.json()).polls;
 	}
+
 	async function createPoll() {
 		const res = await fetch('/api/admin/create-poll', { method: 'POST' });
 		if (res.ok) {
-			toast?.({ message: 'Sondage créé !', theme: 'dotted' });
+			showToast('success', 'Sondage créé !');
 			await loadPolls();
+		} else {
+			showToast('error', 'Erreur lors de la création.');
 		}
 	}
+
 	async function closePoll(pollId: string) {
 		const res = await fetch('/api/admin/close-poll', {
 			method: 'POST',
 			body: JSON.stringify({ pollId })
 		});
 		if (res.ok) {
-			toast?.({ message: 'Sondage fermé.', theme: 'dotted' });
+			showToast('success', 'Sondage fermé.');
 			await loadPolls();
+		} else {
+			showToast('error', 'Erreur lors de la fermeture.');
 		}
 	}
+
 	function copyLink(pollId: string) {
 		const link = `${window.location.origin}/poll/${pollId}`;
 		navigator.clipboard.writeText(link);
-		toast?.({ message: 'Lien copié !', theme: 'dotted' });
+		showToast('success', 'Lien copié !');
 	}
 </script>
 
@@ -55,7 +88,10 @@
 					<Card.Title>Nouveau sondage</Card.Title>
 				</Card.Header>
 				<Card.Content>
-					<button on:click={createPoll} class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+					<button
+						on:click={createPoll}
+						class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+					>
 						+ Créer un sondage
 					</button>
 				</Card.Content>
@@ -86,11 +122,17 @@
 									</Table.Cell>
 									<Table.Cell>{poll._count.votes}</Table.Cell>
 									<Table.Cell class="flex gap-2">
-										<button on:click={() => copyLink(poll.id)} class="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm">
+										<button
+											on:click={() => copyLink(poll.id)}
+											class="inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm"
+										>
 											Copier le lien
 										</button>
 										{#if !poll.closed}
-											<button on:click={() => closePoll(poll.id)} class="inline-flex h-9 items-center justify-center rounded-md bg-destructive px-3 text-sm text-destructive-foreground">
+											<button
+												on:click={() => closePoll(poll.id)}
+												class="inline-flex h-9 items-center justify-center rounded-md bg-destructive px-3 text-sm text-destructive-foreground"
+											>
 												Fermer
 											</button>
 										{/if}

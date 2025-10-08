@@ -1,9 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 const prisma = new PrismaClient();
 
-export const POST = async ({ request }) => {
+export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const { pollId, mood, comment } = await request.json();
 
@@ -12,6 +13,7 @@ export const POST = async ({ request }) => {
 		}
 
 		const poll = await prisma.poll.findUnique({ where: { id: pollId } });
+
 		if (!poll || poll.closed) {
 			return json({ error: 'Sondage invalide ou fermé' }, { status: 403 });
 		}
@@ -26,6 +28,7 @@ export const POST = async ({ request }) => {
 
 		return json({ success: true }, { status: 201 });
 	} catch (e) {
+		console.error('API Vote Error:', e);
 		return json({ error: 'Erreur serveur' }, { status: 500 });
 	}
 };
