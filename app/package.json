@@ -47,6 +47,9 @@
 		"@auth/core": "^0.41.0",
 		"@auth/sveltekit": "^1.11.0",
 		"@prisma/client": "^6.17.0",
+		"chart.js": "^4.5.0",
+		"chartjs-adapter-date-fns": "^3.0.0",
+		"date-fns": "^4.1.0",
 		"lucide-svelte": "^0.545.0",
 		"not-a-toast": "^1.1.5"
 	}
