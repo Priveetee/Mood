@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { signOut } from '@auth/sveltekit/client';
+	import ThemeSwitcher from '$lib/components/ThemeSwitcher.svelte';
+
+	let { userName = 'Admin' } = $props();
 </script>
 
 <div class="flex items-center justify-between">
 	<div>
 		<h1 class="text-4xl font-bold">Dashboard Admin</h1>
-		<p class="text-muted-foreground">Bienvenue, Admin.</p>
+		<p class="text-muted-foreground">Bienvenue, {userName}.</p>
 	</div>
 	<div class="flex items-center gap-2">
 		<button
