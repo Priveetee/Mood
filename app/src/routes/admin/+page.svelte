@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import * as Card from '$lib/components/ui/card';
-	import PollsTable from '$lib/components/admin/PollsTable.svelte';
 	import CreatePollCard from '$lib/components/admin/CreatePollCard.svelte';
+	import PollsTable from '$lib/components/admin/PollsTable.svelte';
 	import LineChart from '$lib/components/admin/LineChart.svelte';
+	import * as Card from '$lib/components/ui/card';
 
+	export let data;
+	
 	let polls: any[] = [];
-	let allVotes: any[] = [];
+	let allVotes: any[] = data.allVotes || [];
 	let toast: any;
 	let pollingInterval: ReturnType<typeof setInterval>;
-	let primaryColor = 'hsl(240 5% 96.1%)';
+	let primaryColor = 'hsl(240 5% 96.1%)'; // Couleur par défaut pour le SSR
 
 	onMount(async () => {
 		const module = await import('not-a-toast');
@@ -19,6 +21,7 @@
 		await refreshData();
 		pollingInterval = setInterval(refreshData, 10000);
 
+		// Lit la vraie couleur du thème une fois la page montée pour le graphique
 		primaryColor = `hsl(${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()})`;
 	});
 
@@ -34,7 +37,15 @@
 			exitAnimation: 'windRightOut'
 		};
 		if (type === 'error') {
-			toast?.({ ...baseOptions, message, showIcon: true, iconType: 'error' });
+			toast?.({
+				...baseOptions,
+				message,
+				showIcon: true,
+				iconAnimation: 'jelly',
+				iconTimingFunction: 'ease-in-out',
+				iconBorderRadius: '50%',
+				iconType: 'error'
+			});
 		} else {
 			toast?.({ ...baseOptions, message, theme: 'dotted', showIcon: type === 'warn' });
 		}
@@ -98,9 +109,10 @@
 		datasets: [
 			{
 				label: 'Humeur (4=Très bien, 1=Pas bien)',
-				data: allVotes.map((v) => v.value),
+				data: allVotes.map((v) => ({ x: v.date, y: v.value })),
 				borderColor: primaryColor,
-				tension: 0.1
+				tension: 0.1,
+				fill: false
 			}
 		]
 	};
@@ -120,18 +132,27 @@
 	<title>Dashboard Admin</title>
 </svelte:head>
 
-<div class="grid gap-6">
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>Tendance Globale</Card.Title>
-		</Card.Header>
-		<Card.Content class="h-[300px]">
-			{#key primaryColor + allVotes.length}
-				<LineChart data={trendData} options={trendOptions} />
-			{/key}
-		</Card.Content>
-	</Card.Root>
+<div class="p-8">
+	<div class="mx-auto max-w-7xl">
+		<div class="mb-8">
+			<h1 class="text-4xl font-bold">Dashboard Admin</h1>
+			<p class="text-muted-foreground">Bienvenue, {data.session?.user?.name ?? 'Admin'}.</p>
+		</div>
 
-	<CreatePollCard onCreatePoll={createPoll} />
-	<PollsTable polls={polls} onCopyLink={copyLink} onClosePoll={closePoll} />
+		<div class="grid gap-6">
+			<Card.Root>
+				<Card.Header>
+					<Card.Title>Tendance Globale</Card.Title>
+				</Card.Header>
+				<Card.Content class="h-[300px]">
+					{#key primaryColor + allVotes.length}
+						<LineChart data={trendData} options={trendOptions} />
+					{/key}
+				</Card.Content>
+			</Card.Root>
+
+			<CreatePollCard onCreatePoll={createPoll} />
+			<PollsTable polls={polls} onCopyLink={copyLink} onClosePoll={closePoll} />
+		</div>
+	</div>
 </div>
