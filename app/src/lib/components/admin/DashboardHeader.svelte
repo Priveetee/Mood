@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { signOut } from '@auth/sveltekit/client';
-	import ThemeSwitcher from '$lib/components/ThemeSwitcher.svelte';
 </script>
 
 <div class="flex items-center justify-between">
@@ -9,7 +8,6 @@
 		<p class="text-muted-foreground">Bienvenue, Admin.</p>
 	</div>
 	<div class="flex items-center gap-2">
-		<ThemeSwitcher />
 		<button
 			type="button"
 			on:click={() => signOut()}
