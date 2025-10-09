@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+// src/routes/api/vote/+server.ts
+import prisma from '$lib/server/db';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-
-const prisma = new PrismaClient();
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {

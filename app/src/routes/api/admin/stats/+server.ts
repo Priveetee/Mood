@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+// src/routes/api/admin/stats/+server.ts
+import prisma from '$lib/server/db';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-
-const prisma = new PrismaClient();
 
 export const GET: RequestHandler = async ({ locals }) => {
 	const session = await locals.auth();
@@ -11,7 +10,6 @@ export const GET: RequestHandler = async ({ locals }) => {
 	}
 
 	try {
-		// On récupère TOUS les votes de TOUS les sondages
 		const allVotes = await prisma.vote.findMany({
 			orderBy: { createdAt: 'asc' }
 		});
