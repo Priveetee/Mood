@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
 	import * as Card from '$lib/components/ui/card';
 
-	const pollId = $page.params.id;
+	export let data; // <-- LA LIGNE CRUCIALE QUI MANQUAIT
+	const { poll } = data;
+
 	let selectedMood: string | null = null;
 	let comment = '';
 	let isSubmitting = false;
@@ -26,7 +27,7 @@
 		{ value: 'rouge', emoji: '😞', label: 'Pas bien' }
 	];
 
-	function showToast(type: 'success' | 'warn' | 'error', message: string) {
+	function showToast(type: 'warn' | 'success' | 'error', message: string) {
 		const baseOptions = {
 			position: 'top-right',
 			orderReversed: true,
@@ -44,12 +45,7 @@
 				iconType: 'error'
 			});
 		} else {
-			toast?.({
-				...baseOptions,
-				message,
-				theme: 'dotted',
-				showIcon: type === 'warn'
-			});
+			toast?.({ ...baseOptions, message, theme: 'dotted', showIcon: type === 'warn' });
 		}
 	}
 
@@ -63,14 +59,13 @@
 			const response = await fetch('/api/vote', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ pollId, mood: selectedMood, comment })
+				body: JSON.stringify({ pollId: poll.id, mood: selectedMood, comment })
 			});
 			if (response.ok) {
-				showToast('success', 'Merci pour votre participation !');
 				hasVoted = true;
 			} else {
-				const data = await response.json();
-				showToast('error', data.error || 'Une erreur est survenue.');
+				const errorData = await response.json();
+				showToast('error', errorData.error || 'Une erreur est survenue.');
 			}
 		} catch {
 			showToast('error', 'Erreur de connexion au serveur.');
@@ -80,10 +75,10 @@
 	}
 </script>
 
-<!-- Le reste du HTML ne change pas -->
 <svelte:head>
 	<title>Votez pour votre humeur</title>
 </svelte:head>
+
 <div class="flex min-h-screen items-center justify-center p-4">
 	<div class="w-full max-w-2xl transition-all duration-500">
 		{#if !hasVoted}
@@ -91,7 +86,7 @@
 				<Card.Header class="text-center">
 					<Card.Title class="text-4xl font-bold">Comment vous sentez-vous ?</Card.Title>
 					<Card.Description class="mt-2">
-						Votre avis est important. Sélectionnez votre humeur du moment.
+						Sondage: <span class="font-mono text-xs">{poll.id}</span>
 					</Card.Description>
 				</Card.Header>
 				<Card.Content>
@@ -116,6 +111,7 @@
 							</button>
 						{/each}
 					</div>
+
 					<div class="mb-8">
 						<label for="comment" class="mb-2 block text-sm font-medium">
 							Laisser un commentaire (optionnel)
@@ -128,6 +124,7 @@
 							class="w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 						></textarea>
 					</div>
+
 					<button
 						type="button"
 						on:click={handleSubmit}
