@@ -13,12 +13,12 @@
 	let delayed: boolean;
 
 	const voteCounts = { vert: 0, bleu: 0, orange: 0, rouge: 0 };
-	poll.votes.forEach((vote) => {
+	poll.votes.forEach((vote: { mood: string | number; }) => {
 		if (vote.mood in voteCounts) {
 			voteCounts[vote.mood]++;
 		}
 	});
-	const comments = poll.votes.filter((v) => v.comment && v.comment.trim() !== '');
+	const comments = poll.votes.filter((v: { comment: any; }) => v.comment && v.comment.trim() !== '');
 
 	const chartConfig: ChartConfiguration = {
 		type: 'bar',
@@ -69,6 +69,7 @@
 			}
 		}
 	};
+	
 	onMount(() => {
 		const computedStyles = getComputedStyle(document.documentElement);
 		const moodColors = {
@@ -78,19 +79,20 @@
 			'Pas bien': computedStyles.getPropertyValue('--mood-red').trim()
 		};
 		const getResolvedColor = (ctx: ScriptableContext<'bar'>) => {
-			const mood = ctx.chart.data.labels[ctx.dataIndex] as string;
+			const mood = ctx.chart.data.labels![ctx.dataIndex] as string;
 			const colorValues = moodColors[mood] || '0 0 0';
 			return `hsl(${colorValues})`;
 		};
 		if (chartConfig.data.datasets[0]) {
 			chartConfig.data.datasets[0].borderColor = getResolvedColor;
-			chartConfig.data.datasets[0].backgroundColor = (ctx) => transparentize(getResolvedColor(ctx), 0.5);
+			chartConfig.data.datasets[0].backgroundColor = (ctx: ScriptableContext<"bar">) => transparentize(getResolvedColor(ctx), 0.5);
 		}
 		const ctx = canvasElement.getContext('2d');
 		if (ctx) {
 			chart = new Chart(ctx, chartConfig);
 		}
 	});
+
 	onDestroy(() => {
 		chart?.destroy();
 	});

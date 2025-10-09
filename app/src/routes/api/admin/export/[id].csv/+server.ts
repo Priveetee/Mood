@@ -3,15 +3,12 @@ import type { RequestHandler } from './$types';
 
 const prisma = new PrismaClient();
 
-// Fonction pour échapper les caractères pour le CSV
 const escapeCsvField = (field: string | null): string => {
 	if (field === null || field === undefined) {
 		return '';
 	}
 	const str = String(field);
-	// Si le champ contient une virgule, des guillemets, ou un retour à la ligne, on l'entoure de guillemets.
 	if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-		// On double les guillemets existants à l'intérieur du champ.
 		return `"${str.replace(/"/g, '""')}"`;
 	}
 	return str;
