@@ -53,6 +53,7 @@
 		"chartjs-adapter-date-fns": "^3.0.0",
 		"date-fns": "^4.1.0",
 		"lucide-svelte": "^0.545.0",
-		"not-a-toast": "^1.1.5"
+		"not-a-toast": "^1.1.5",
+		"sveltekit-rate-limiter": "^0.7.0"
 	}
 }
