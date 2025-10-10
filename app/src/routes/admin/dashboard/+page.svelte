@@ -11,17 +11,15 @@
 		BarElement,
 		CategoryScale,
 		LinearScale,
-		TimeScale // Nécessaire pour les graphiques en ligne avec les dates
+		TimeScale
 	} from 'chart.js';
-	import 'chartjs-adapter-date-fns'; // S'assurer que l'adaptateur de date est importé
+	import 'chartjs-adapter-date-fns';
 
 	export let data;
 	const { stats } = data;
 
-	// Enregistrement des composants Chart.js
 	ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, TimeScale);
 
-	// Logique pour le graphique en barres
 	const barChartData = {
 		labels: stats?.barChartData.map((d) => d.mood) || [],
 		datasets: [
@@ -78,7 +76,6 @@
 		}
 	};
 
-	// Logique pour le graphique en ligne
 	const lineChartData = {
 		labels: stats?.lineChartData.map((d) => d.date) || [],
 		datasets: [
@@ -101,7 +98,7 @@
 			},
 			title: {
 				display: true,
-				text: 'Tendance de l\'Humeur au Fil du Temps',
+				text: "Tendance de l'Humeur au Fil du Temps",
 				color: 'hsl(var(--foreground))',
 				font: {
 					size: 18

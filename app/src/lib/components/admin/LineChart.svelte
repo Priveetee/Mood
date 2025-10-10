@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Chart from 'chart.js/auto';
-	import 'chartjs-adapter-date-fns'; // Important pour les dates
+	import 'chartjs-adapter-date-fns';
 
 	let { data, options } = $props();
 	let canvasElement: HTMLCanvasElement;

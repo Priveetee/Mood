@@ -1,4 +1,3 @@
-// src/routes/api/admin/create-poll/+server.ts
 import prisma from '$lib/server/db';
 import { json } from '@sveltejs/kit';
 

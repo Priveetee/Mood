@@ -10,7 +10,6 @@ export const load: PageServerLoad = async (event) => {
 		throw redirect(303, '/admin/login');
 	}
 
-	// On charge ici les données nécessaires UNIQUEMENT pour cette page
 	const allVotes = await prisma.vote.findMany({
 		orderBy: { createdAt: 'asc' }
 	});
