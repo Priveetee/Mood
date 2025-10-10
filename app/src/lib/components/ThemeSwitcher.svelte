@@ -6,12 +6,14 @@
 <button
 	type="button"
 	on:click={toggleTheme}
-	class="inline-flex h-10 w-10 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+	class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-all duration-300 hover:scale-110 hover:bg-accent focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
 >
-	{#if $theme === 'light'}
-		<Moon class="h-[1.2rem] w-[1.2rem]" />
-	{:else}
-		<Sun class="h-[1.2rem] w-[1.2rem]" />
-	{/if}
+	<div class="transition-transform duration-500 {$theme === 'dark' ? 'rotate-180' : 'rotate-0'}">
+		{#if $theme === 'light'}
+			<Moon class="h-5 w-5" />
+		{:else}
+			<Sun class="h-5 w-5" />
+		{/if}
+	</div>
 	<span class="sr-only">Toggle theme</span>
 </button>
