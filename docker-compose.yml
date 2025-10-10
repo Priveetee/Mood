@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8888:4173"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/mydb
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=???
+      - POSTGRES_PASSWORD=???
+      - POSTGRES_DB=m???
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
