@@ -7,27 +7,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Poll {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  expiresAt DateTime?
-  closed    Boolean  @default(false)
-  votes     Vote[]
-}
-
-model Vote {
-  id        Int      @id @default(autoincrement())
-  pollId    String
-  mood      String
-  comment   String?
-  createdAt DateTime @default(now())
-  poll      Poll     @relation(fields: [pollId], references: [id])
-}
-
 model User {
   id           String   @id @default(cuid())
   username     String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Campaign {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  polls     Poll[]
+}
+
+model Poll {
+  id          String    @id @default(cuid())
+  managerName String
+  createdAt   DateTime  @default(now())
+  closed      Boolean   @default(false)
+  expiresAt   DateTime?
+  votes       Vote[]
+  campaign    Campaign  @relation(fields: [campaignId], references: [id])
+  campaignId  String
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  mood      String
+  comment   String?
+  createdAt DateTime @default(now())
+  poll      Poll     @relation(fields: [pollId], references: [id])
+  pollId    String
 }
