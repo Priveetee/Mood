@@ -8,22 +8,27 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw redirect(303, '/admin/login');
 	}
 
-	const poll = await prisma.poll.findUnique({
+	const campaign = await prisma.campaign.findUnique({
 		where: {
 			id: params.id
 		},
 		include: {
-			votes: {
+			polls: {
 				orderBy: {
 					createdAt: 'desc'
+				},
+				include: {
+					_count: {
+						select: { votes: true }
+					}
 				}
 			}
 		}
 	});
 
-	if (!poll) {
-		throw error(404, 'Sondage non trouvé');
+	if (!campaign) {
+		throw error(404, 'Campagne non trouvée');
 	}
 
-	return { poll };
+	return { campaign };
 };

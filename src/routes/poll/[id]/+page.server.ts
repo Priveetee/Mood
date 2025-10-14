@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '$lib/server/db';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-
-const prisma = new PrismaClient();
 
 export const load: PageServerLoad = async ({ params }) => {
 	const poll = await prisma.poll.findUnique({
