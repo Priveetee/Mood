@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import * as Card from '$lib/components/ui/card';
-
 	export let data;
 	const { poll } = data;
 
@@ -11,7 +9,6 @@
 	let isSubmitting = false;
 	let hasVoted = false;
 	let toast: any;
-
 	onMount(async () => {
 		if (browser) {
 			const module = await import('not-a-toast');
@@ -19,7 +16,6 @@
 			await import('not-a-toast/style.css');
 		}
 	});
-
 	const moods = [
 		{
 			value: 'vert',
@@ -50,7 +46,6 @@
 			shadow: 'shadow-red-500/50'
 		}
 	];
-
 	function showToast(type: 'warn' | 'success' | 'error', message: string) {
 		const baseOptions = {
 			position: 'top-right',
