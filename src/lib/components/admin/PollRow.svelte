@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
-	import * as Table from '$lib/components/ui/table';
-
 	export let poll: any;
 	export let onCopyLink: (id: string) => void;
 	export let onClosePoll: (id: string) => Promise<void>;
@@ -22,18 +19,25 @@
 	}
 
 	$: status = getStatus();
+
+    const badgeClasses = {
+        default: "bg-primary text-primary-foreground",
+        destructive: "bg-destructive text-destructive-foreground"
+    };
 </script>
 
-<Table.Row>
-	<Table.Cell class="font-mono text-xs">
+<tr class="border-b transition-colors hover:bg-muted/50">
+	<td class="p-4 align-middle font-mono text-xs">
 		{poll.id.substring(0, 12)}...
-	</Table.Cell>
-	<Table.Cell>
-		<Badge variant={status.variant}>{status.label}</Badge>
-	</Table.Cell>
-	<Table.Cell>{formatDate(poll.createdAt)}</Table.Cell>
-	<Table.Cell>{poll._count.votes}</Table.Cell>
-	<Table.Cell>
+	</td>
+	<td class="p-4 align-middle">
+        <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors {badgeClasses[status.variant]}">
+            {status.label}
+        </div>
+	</td>
+	<td class="p-4 align-middle">{formatDate(poll.createdAt)}</td>
+	<td class="p-4 align-middle">{poll._count.votes}</td>
+	<td class="p-4 align-middle">
 		<div class="flex items-center gap-2">
 			<a
 				href="/admin/poll/{poll.id}"
@@ -58,5 +62,5 @@
 				</button>
 			{/if}
 		</div>
-	</Table.Cell>
-</Table.Row>
+	</td>
+</tr>

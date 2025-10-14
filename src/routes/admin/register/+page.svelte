@@ -1,10 +1,4 @@
-<!-- src/routes/admin/register/+page.svelte -->
 <script lang="ts">
-  import * as Card from '$lib/components/ui/card';
-  import { Button } from '$lib/components/ui/button';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-
   let username = '';
   let password = '';
   let isLoading = false;
@@ -16,7 +10,6 @@
     entryAnimation: 'windLeftIn',
     exitAnimation: 'windRightOut',
   };
-
   const errorToastConfig = {
     ...toastConfig,
     showIcon: true,
@@ -25,18 +18,15 @@
     iconBorderRadius: '50%',
     iconType: 'error',
   };
-
   async function handleRegister() {
     isLoading = true;
     errorMessage = '';
-
     try {
       const response = await fetch('/api/admin/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-
       const { default: toast } = await import('not-a-toast');
 
       if (response.ok) {
@@ -74,34 +64,34 @@
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-  <Card.Root class="w-full max-w-sm">
-    <Card.Header>
-      <Card.Title class="text-2xl">Configuration Initiale</Card.Title>
-      <Card.Description>
+  <div class="w-full max-w-sm rounded-xl border bg-card text-card-foreground shadow-sm">
+    <div class="flex flex-col space-y-1.5 p-6">
+      <h3 class="text-2xl font-semibold leading-none tracking-tight">Configuration Initiale</h3>
+      <p class="text-sm text-muted-foreground">
         Créez le premier compte administrateur pour commencer à utiliser l'application.
-      </Card.Description>
-    </Card.Header>
-    <Card.Content>
+      </p>
+    </div>
+    <div class="p-6 pt-0">
       <form on:submit|preventDefault={handleRegister} class="grid gap-4">
         <div class="grid gap-2">
-          <Label for="username">Nom d'utilisateur</Label>
-          <Input id="username" type="text" bind:value={username} required />
+          <label for="username" class="text-sm font-medium leading-none">Nom d'utilisateur</label>
+          <input id="username" type="text" bind:value={username} required class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"/>
         </div>
         <div class="grid gap-2">
-          <Label for="password">Mot de passe</Label>
-          <Input id="password" type="password" bind:value={password} required />
+          <label for="password" class="text-sm font-medium leading-none">Mot de passe</label>
+          <input id="password" type="password" bind:value={password} required class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"/>
         </div>
         {#if errorMessage}
           <p class="text-sm text-destructive">{errorMessage}</p>
         {/if}
-        <Button type="submit" class="w-full" disabled={isLoading}>
+        <button type="submit" class="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" disabled={isLoading}>
           {#if isLoading}
             Création en cours...
           {:else}
             Créer le compte
           {/if}
-        </Button>
+        </button>
       </form>
-    </Card.Content>
-  </Card.Root>
+    </div>
+  </div>
 </div>

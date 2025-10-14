@@ -2,12 +2,10 @@
 	import { onMount, onDestroy } from 'svelte';
 	import CreatePollCard from '$lib/components/admin/CreatePollCard.svelte';
 	import PollsTable from '$lib/components/admin/PollsTable.svelte';
-	import * as Card from '$lib/components/ui/card';
 	import { Download, Calendar } from 'lucide-svelte';
 	import Chart from 'chart.js/auto';
 
 	export let data;
-
 	let polls: any[] = [];
 	let allVotes: any[] = data.allVotes || [];
 	let filteredVotes: any[] = [];
@@ -16,13 +14,11 @@
 	let selectedPeriod: number = 30;
 	let canvasElement: HTMLCanvasElement;
 	let chart: Chart;
-
 	const periods = [
 		{ label: '1 mois', value: 30 },
 		{ label: '3 mois', value: 90 },
 		{ label: '6 mois', value: 180 }
 	];
-
 	onMount(async () => {
 		const module = await import('not-a-toast');
 		toast = module.default;
@@ -36,24 +32,21 @@
 		clearInterval(pollingInterval);
 		chart?.destroy();
 	});
-
 	$: {
 		const now = new Date();
 		const cutoffDate = new Date(now.getTime() - selectedPeriod * 24 * 60 * 60 * 1000);
-		filteredVotes = allVotes.filter((v) => new Date(v.date) >= cutoffDate);
+		filteredVotes = allVotes.filter((v) => new Date(v.createdAt) >= cutoffDate);
 		updateChart();
 	}
 
 	function updateChart() {
 		if (!canvasElement) return;
-
 		const moodCounts = { vert: 0, bleu: 0, orange: 0, rouge: 0 };
 		filteredVotes.forEach((v) => {
-			const moodMap = { 4: 'vert', 3: 'bleu', 2: 'orange', 1: 'rouge' };
-			const mood = moodMap[v.value];
+			const moodMap: { [key: number]: 'vert' | 'bleu' | 'orange' | 'rouge' } = { 4: 'vert', 3: 'bleu', 2: 'orange', 1: 'rouge' };
+			const mood = moodMap[v.value as number];
 			if (mood) moodCounts[mood]++;
 		});
-
 		const computedStyles = getComputedStyle(document.documentElement);
 		const greenColor = `hsl(${computedStyles.getPropertyValue('--mood-green').trim()})`;
 		const blueColor = `hsl(${computedStyles.getPropertyValue('--mood-blue').trim()})`;
@@ -74,7 +67,6 @@
 				}
 			]
 		};
-
 		if (chart) {
 			chart.data = chartData;
 			chart.update();
@@ -106,7 +98,9 @@
 								bodyFont: { size: 13 },
 								callbacks: {
 									label: (context) => {
-										const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        if (context.dataset.data.length === 0) return '';
+										const total = context.dataset.data.reduce((a, b) => (a as number) + (b as number), 0) as number;
+                                        if(total === 0) return `${context.label}: 0 votes (0%)`;
 										const value = context.parsed;
 										const percentage = ((value / total) * 100).toFixed(1);
 										return `${context.label}: ${value} votes (${percentage}%)`;
@@ -198,11 +192,10 @@
 	function exportCSV() {
 		const moodCounts = { vert: 0, bleu: 0, orange: 0, rouge: 0 };
 		filteredVotes.forEach((v) => {
-			const moodMap = { 4: 'vert', 3: 'bleu', 2: 'orange', 1: 'rouge' };
-			const mood = moodMap[v.value];
+			const moodMap: { [key: number]: 'vert' | 'bleu' | 'orange' | 'rouge' } = { 4: 'vert', 3: 'bleu', 2: 'orange', 1: 'rouge' };
+            const mood = moodMap[v.value as number];
 			if (mood) moodCounts[mood]++;
 		});
-
 		const header = 'Humeur,Nombre de votes\n';
 		const rows = [
 			`Très bien,${moodCounts.vert}`,
@@ -246,13 +239,13 @@
 			</div>
 
 			<div class="grid gap-6">
-				<Card.Root class="overflow-hidden border shadow-lg">
-					<Card.Header class="border-b border-border bg-card">
+                <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                    <div class="border-b border-border bg-card p-6">
 						<div class="flex flex-wrap items-center justify-between gap-4">
-							<Card.Title class="flex items-center gap-2 text-2xl text-card-foreground">
+							<div class="flex items-center gap-2 text-2xl font-semibold text-card-foreground">
 								<span>📊</span>
 								Répartition des Humeurs
-							</Card.Title>
+							</div>
 							<div class="flex flex-wrap items-center gap-2">
 								<div
 									class="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-1.5"
@@ -282,11 +275,11 @@
 								</button>
 							</div>
 						</div>
-					</Card.Header>
-					<Card.Content class="h-[450px] bg-card p-8">
+					</div>
+					<div class="h-[450px] bg-card p-8">
 						<canvas bind:this={canvasElement}></canvas>
-					</Card.Content>
-				</Card.Root>
+					</div>
+				</div>
 
 				<CreatePollCard onCreatePoll={createPoll} />
 				<PollsTable {polls} onCopyLink={copyLink} onClosePoll={closePoll} />

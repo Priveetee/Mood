@@ -1,10 +1,6 @@
-<!-- src/routes/admin/login/+page.svelte -->
 <script lang="ts">
   import { signIn } from '@auth/sveltekit/client';
   import { goto } from '$app/navigation';
-  import { Input } from '$lib/components/ui/input';
-  import { Label } from '$lib/components/ui/label';
-  import * as Card from '$lib/components/ui/card';
 
   let username = '';
   let password = '';
@@ -20,20 +16,17 @@
         password,
         redirect: false,
       });
-
       if (result?.error) {
         if (result.error === 'CredentialsSignin') {
-          error = 'Nom d\'utilisateur ou mot de passe incorrect.';
+          error = "Nom d'utilisateur ou mot de passe incorrect.";
         } else {
-          error = 'Une erreur d\'authentification est survenue.';
-          console.error('Auth Error:', result.error);
+          error = "Une erreur d'authentification est survenue.";
         }
       } else if (result?.ok) {
         await goto('/admin');
       }
     } catch (e) {
       error = 'Une erreur de connexion est survenue.';
-      console.error('Login Error:', e);
     } finally {
       loading = false;
     }
@@ -44,21 +37,21 @@
   <title>Connexion Admin</title>
 </svelte:head>
 
-<div class="flex min-h-screen items-center justify-center p-4">
-  <Card.Root class="w-full max-w-md">
-    <Card.Header>
-      <Card.Title class="text-2xl">Administration</Card.Title>
-      <Card.Description>Connectez-vous pour accéder au dashboard</Card.Description>
-    </Card.Header>
-    <Card.Content>
+<div class="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+  <div class="w-full max-w-md rounded-xl border bg-card text-card-foreground shadow-sm">
+    <div class="flex flex-col space-y-1.5 p-6">
+      <h3 class="text-2xl font-semibold leading-none tracking-tight">Administration</h3>
+      <p class="text-sm text-muted-foreground">Connectez-vous pour accéder au dashboard</p>
+    </div>
+    <div class="p-6 pt-0">
       <form on:submit|preventDefault={handleLogin} class="space-y-4">
         <div class="space-y-2">
-          <Label for="username">Nom d'utilisateur</Label>
-          <Input id="username" type="text" bind:value={username} placeholder="admin" required />
+          <label for="username" class="text-sm font-medium leading-none">Nom d'utilisateur</label>
+          <input id="username" type="text" bind:value={username} placeholder="admin" required class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" />
         </div>
         <div class="space-y-2">
-          <Label for="password">Mot de passe</Label>
-          <Input id="password" type="password" bind:value={password} placeholder="••••••••" required />
+          <label for="password" class="text-sm font-medium leading-none">Mot de passe</label>
+          <input id="password" type="password" bind:value={password} placeholder="••••••••" required class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background" />
         </div>
         {#if error}
           <p class="text-sm text-destructive">{error}</p>
@@ -71,6 +64,6 @@
           {loading ? 'Connexion...' : 'Se connecter'}
         </button>
       </form>
-    </Card.Content>
-  </Card.Root>
+    </div>
+  </div>
 </div>
