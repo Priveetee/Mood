@@ -130,7 +130,7 @@
 								{@const isSelected = selectedMood === mood.value}
 								<button
 									type="button"
-									on:click={() => (selectedMood = mood.value)}
+									onclick={() => (selectedMood = mood.value)}
 									class="group relative overflow-hidden rounded-2xl border-2 p-8 text-center transition-all duration-300 focus:ring-4 focus:ring-primary/20 focus:outline-none {isSelected
 										? `border-transparent bg-gradient-to-br ${mood.color} text-white shadow-xl ${mood.shadow} scale-105`
 										: 'border-border bg-card hover:scale-105 hover:border-primary/30 hover:shadow-lg'}"
@@ -173,7 +173,7 @@
 
 						<button
 							type="button"
-							on:click={handleSubmit}
+							onclick={handleSubmit}
 							disabled={!selectedMood || isSubmitting}
 							class="group relative h-14 w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary/90 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/40 focus:ring-4 focus:ring-primary/30 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
 						>
