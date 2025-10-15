@@ -27,9 +27,17 @@
 				</p>
 			</div>
 			<div class="flex items-center gap-2">
-				<button
-					on:click={copyAllLinks}
+				<a
+					href="/admin/campaign/{campaign.id}/results"
 					class="flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-muted"
+					aria-label="Voir les résultats de la campagne"
+				>
+					<BarChart3 class="h-5 w-5" />
+				</a>
+				<button
+					onclick={copyAllLinks}
+					class="flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-muted"
+					aria-label="Copier tous les liens"
 				>
 					<Copy class="h-5 w-5" />
 				</button>

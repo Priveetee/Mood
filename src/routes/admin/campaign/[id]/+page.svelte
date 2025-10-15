@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { ArrowLeft } from 'lucide-svelte';
+	import { ArrowLeft, Power } from 'lucide-svelte';
 	import Modal from '$lib/components/admin/Modal.svelte';
 	import { invalidateAll } from '$app/navigation';
+	import { showToast } from '$lib/toast';
 
 	let { data } = $props();
 	let campaign = $state(data.campaign);
@@ -13,6 +14,7 @@
 	let showAddManagerModal = $state(false);
 	let newManagerName = $state('');
 	let isCreating = $state(false);
+	let closingPollId = $state<string | null>(null);
 
 	async function addManager() {
 		if (!newManagerName || isCreating) return;
@@ -31,8 +33,9 @@
 			showAddManagerModal = false;
 			newManagerName = '';
 			await invalidateAll();
+			await showToast('success', `Sondage pour ${newManagerName} créé.`);
 		} else {
-			alert('Erreur lors de l\'ajout du manager.');
+			await showToast('error', "Erreur lors de l'ajout du manager.");
 		}
 		isCreating = false;
 	}
@@ -40,7 +43,26 @@
 	function copyLink(pollId: string) {
 		const link = `${window.location.origin}/poll/${pollId}`;
 		navigator.clipboard.writeText(link);
-		alert('Lien copié !');
+		showToast('success', 'Lien copié !');
+	}
+
+	async function closePoll(pollId: string) {
+		if (closingPollId) return;
+		closingPollId = pollId;
+
+		const response = await fetch('/api/admin/close-poll', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ pollId })
+		});
+
+		if (response.ok) {
+			await invalidateAll();
+			await showToast('success', 'Le sondage a été fermé.');
+		} else {
+			await showToast('error', 'Erreur lors de la fermeture du sondage.');
+		}
+		closingPollId = null;
 	}
 </script>
 
@@ -148,6 +170,16 @@
 										>
 											Copier
 										</button>
+										{#if !poll.closed}
+											<button
+												type="button"
+												onclick={() => closePoll(poll.id)}
+												disabled={closingPollId === poll.id}
+												class="inline-flex h-9 w-9 items-center justify-center whitespace-nowrap rounded-md bg-destructive text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
+											>
+												<Power class="h-4 w-4" />
+											</button>
+										{/if}
 									</div>
 								</td>
 							</tr>

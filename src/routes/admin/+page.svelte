@@ -2,6 +2,7 @@
 	import CampaignCard from '$lib/components/admin/CampaignCard.svelte';
 	import Modal from '$lib/components/admin/Modal.svelte';
 	import { invalidateAll } from '$app/navigation';
+	import { showToast } from '$lib/toast';
 
 	let { data } = $props();
 
@@ -29,8 +30,9 @@
 			showCreateCampaignModal = false;
 			newCampaignName = '';
 			await invalidateAll();
+			await showToast('success', 'La campagne a été créée avec succès.');
 		} else {
-			alert('Erreur lors de la création de la campagne.');
+			await showToast('error', 'Erreur lors de la création de la campagne.');
 		}
 		isCreating = false;
 	}
