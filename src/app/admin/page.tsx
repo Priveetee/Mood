@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
-import { PlusCircle, List, BarChart3, Settings } from "lucide-react";
+import { PlusCircle, List, BarChart3, Github } from "lucide-react";
 
 const dashboardItems = [
   {
@@ -24,14 +24,14 @@ const dashboardItems = [
     title: "Résultats Globaux",
     description: "Analyser les tendances de toutes les campagnes.",
     className: "",
-    href: "#",
+    href: "/admin/results/global",
   },
   {
-    icon: <Settings className="h-8 w-8 text-white" />,
-    title: "Paramètres",
-    description: "Gérer les administrateurs et les options.",
+    icon: <Github className="h-10 w-10 text-white" />,
+    title: "Projet GitHub",
+    description: "Voir le code source et contribuer.",
     className: "sm:col-span-2",
-    href: "#",
+    href: "https://github.com/Priveetee/Mood",
   },
 ];
 
