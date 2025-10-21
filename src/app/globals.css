@@ -120,3 +120,29 @@
         @apply text-foreground;
     }
 }
+
+.card--border-glow {
+    --glow-color: 132, 0, 255;
+    --glow-x: 50%;
+    --glow-y: 50%;
+    --glow-intensity: 0;
+    --glow-radius: 300px;
+}
+
+.card--border-glow:hover {
+    --glow-intensity: 0.15;
+}
+
+.card--border-glow::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+        rgba(var(--glow-color), var(--glow-intensity)) 0%,
+        transparent 70%
+    );
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+}
