@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  ArrowLeft,
   Calendar as CalendarIcon,
   TrendingUp,
   Users,
@@ -17,7 +19,6 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/app/admin/theme-context";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Card,
   CardContent,
@@ -44,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const calendarClassNames = {
   months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
@@ -188,209 +190,216 @@ export default function GlobalResultsPage() {
 
   return (
     <div className="p-8">
-      <header className="mb-10 max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-white">Résultats Globaux</h1>
-        <p className="text-slate-400 mt-2">
-          Analysez et filtrez les résultats de toutes les campagnes.
-        </p>
-      </header>
+      <Link
+        href="/admin"
+        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 w-fit"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Retour au Dashboard
+      </Link>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <header className="mb-10 max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-white">Résultats Globaux</h1>
+          <p className="text-slate-400 mt-2">
+            Analysez et filtrez les résultats de toutes les campagnes.
+          </p>
+        </header>
 
-      <main className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between gap-4 p-4 mb-8 rounded-lg bg-slate-900 border border-slate-800">
-          <div className="flex items-center gap-4">
-            {isClient && (
-              <>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-[280px] h-11 bg-slate-800 border-slate-700 text-white">
-                    <SelectValue placeholder="Toutes les campagnes" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                    <SelectItem value="all">Toutes les campagnes</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-[280px] h-11 bg-slate-800 border-slate-700 text-white">
-                    <SelectValue placeholder="Tous les managers" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-white">
-                    <SelectItem value="all">Tous les managers</SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {isClient && (
-              <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="date"
-                    variant={"outline"}
-                    className={cn(
-                      "w-[300px] h-11 justify-start text-left font-normal bg-slate-800 border-slate-700 hover:bg-slate-700 text-white",
-                      !date && "text-slate-400",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date?.from ? (
-                      date.to ? (
-                        <>
-                          {format(date.from, "LLL dd, y")} -{" "}
-                          {format(date.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(date.from, "LLL dd, y")
-                      )
-                    ) : (
-                      <span>Choisissez une période</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <AnimatePresence>
-                  {isPopoverOpen && (
-                    <PopoverContent
-                      asChild
-                      className="w-auto p-0 border-slate-800 bg-slate-950"
-                      align="end"
+        <main className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between gap-4 p-4 mb-8 rounded-lg bg-slate-900 border border-slate-800">
+            <div className="flex items-center gap-4">
+              {isClient && (
+                <>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[280px] h-11 bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="Toutes les campagnes" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                      <SelectItem value="all">Toutes les campagnes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[280px] h-11 bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="Tous les managers" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                      <SelectItem value="all">Tous les managers</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {isClient && (
+                <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date"
+                      variant={"outline"}
+                      className={cn(
+                        "w-[300px] h-11 justify-start text-left font-normal bg-slate-800 border-slate-700 hover:bg-slate-700 text-white",
+                        !date && "text-slate-400",
+                      )}
                     >
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date?.from ? (
+                        date.to ? (
+                          <>
+                            {format(date.from, "LLL dd, y")} -{" "}
+                            {format(date.to, "LLL dd, y")}
+                          </>
+                        ) : (
+                          format(date.from, "LLL dd, y")
+                        )
+                      ) : (
+                        <span>Choisissez une période</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <AnimatePresence>
+                    {isPopoverOpen && (
+                      <PopoverContent
+                        asChild
+                        className="w-auto p-0 border-slate-800 bg-slate-950"
+                        align="end"
                       >
-                        <Calendar
-                          initialFocus
-                          mode="range"
-                          defaultMonth={date?.from}
-                          selected={date}
-                          onSelect={setDate}
-                          numberOfMonths={2}
-                          classNames={calendarClassNames}
-                        />
-                      </motion.div>
-                    </PopoverContent>
-                  )}
-                </AnimatePresence>
-              </Popover>
-            )}
-            <Button
-              variant="outline"
-              className="h-11 gap-2 bg-slate-800 border-slate-700 text-white hover:bg-slate-700 hover:text-white"
-            >
-              <FileDown className="h-4 w-4" />
-              Exporter (CSV)
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="flex flex-col bg-slate-900 border-slate-800 text-white">
-            <CardHeader className="items-center pb-0">
-              <CardTitle>Répartition des Humeurs</CardTitle>
-              <CardDescription>Période sélectionnée</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 pb-0">
-              <ChartContainer
-                config={chartConfig}
-                className="mx-auto aspect-square max-h-[350px]"
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                        >
+                          <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={date?.from}
+                            selected={date}
+                            onSelect={setDate}
+                            numberOfMonths={2}
+                            classNames={calendarClassNames}
+                          />
+                        </motion.div>
+                      </PopoverContent>
+                    )}
+                  </AnimatePresence>
+                </Popover>
+              )}
+              <Button
+                variant="outline"
+                className="h-11 gap-2 bg-slate-800 border-slate-700 text-white hover:bg-slate-700 hover:text-white"
               >
-                <PieChart>
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                  <Pie
-                    data={moods}
-                    dataKey="votes"
-                    nameKey="mood"
-                    innerRadius={80}
-                    outerRadius={120}
-                    strokeWidth={5}
-                    labelLine={false}
-                    label={<CustomizedLabel />}
-                    onMouseEnter={(data) => setSilkColor(data.fill)}
-                    onMouseLeave={() => setSilkColor(darkThemeColor)}
-                  >
-                    {moods.map((entry) => (
-                      <Cell
-                        key={`cell-${entry.name}`}
-                        fill={entry.fill}
-                        stroke={entry.fill}
-                      />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-            <CardFooter className="flex-col gap-2 text-sm">
-              <div className="flex items-center gap-2 font-medium leading-none text-slate-300">
-                Tendance positive de 3.4% ce mois-ci{" "}
-                <TrendingUp className="h-4 w-4 text-green-500" />
-              </div>
-              <div className="leading-none text-slate-500">
-                Affichage des résultats pour la période complète
-              </div>
-            </CardFooter>
-          </Card>
+                <FileDown className="h-4 w-4" />
+                Exporter (CSV)
+              </Button>
+            </div>
+          </div>
 
-          <Card className="flex flex-col bg-slate-900 border-slate-800 text-white">
-            <CardHeader>
-              <CardTitle>Derniers Commentaires</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[430px] pr-4">
-                <div className="space-y-6">
-                  {mockComments.map((item, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div
-                        className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${
-                          item.mood === "Très bien"
-                            ? "bg-green-500"
-                            : item.mood === "Neutre"
-                              ? "bg-sky-500"
-                              : item.mood === "Moyen"
-                                ? "bg-orange-500"
-                                : "bg-red-500"
-                        }`}
-                      />
-                      <div>
-                        <p className="font-semibold text-slate-300">
-                          {item.user}{" "}
-                          <span className="text-xs font-normal text-slate-500">
-                            (Équipe {item.manager})
-                          </span>
-                        </p>
-                        <p className="text-sm text-slate-400">{item.comment}</p>
-                      </div>
-                    </div>
-                  ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="flex flex-col bg-slate-900 border-slate-800 text-white">
+              <CardHeader className="items-center pb-0">
+                <CardTitle>Répartition des Humeurs</CardTitle>
+                <CardDescription>Période sélectionnée</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 pb-0">
+                <ChartContainer
+                  config={chartConfig}
+                  className="mx-auto aspect-square max-h-[350px]"
+                >
+                  <PieChart>
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel />}
+                    />
+                    <Pie
+                      data={moods}
+                      dataKey="votes"
+                      nameKey="mood"
+                      innerRadius={80}
+                      outerRadius={120}
+                      strokeWidth={5}
+                      labelLine={false}
+                      label={<CustomizedLabel />}
+                      onMouseEnter={(data) => setSilkColor(data.fill)}
+                      onMouseLeave={() => setSilkColor(darkThemeColor)}
+                    >
+                      {moods.map((entry) => (
+                        <Cell
+                          key={`cell-${entry.name}`}
+                          fill={entry.fill}
+                          stroke={entry.fill}
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+              <CardFooter className="flex-col gap-2 text-sm">
+                <div className="flex items-center gap-2 font-medium leading-none text-slate-300">
+                  Tendance positive de 3.4% ce mois-ci{" "}
+                  <TrendingUp className="h-4 w-4 text-green-500" />
                 </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
+                <div className="leading-none text-slate-500">
+                  Affichage des résultats pour la période complète
+                </div>
+              </CardFooter>
+            </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-          <StatCard
-            icon={<Users className="h-5 w-5 text-slate-500" />}
-            title="Votes Totaux"
-            value={totalVotes}
-          />
-          <StatCard
-            icon={<span className="text-2xl">{dominantMood.emoji}</span>}
-            title="Humeur Dominante"
-            value={dominantMood.name}
-            onMouseEnter={() => setSilkColor(dominantMood.fill)}
-            onMouseLeave={() => setSilkColor(darkThemeColor)}
-          />
-          <StatCard
-            icon={<TrendingUp className="h-5 w-5 text-slate-500" />}
-            title="Taux de Participation"
-            value="85%"
-          />
-        </div>
-      </main>
+            <Card className="flex flex-col bg-slate-900 border-slate-800 text-white">
+              <CardHeader>
+                <CardTitle>Derniers Commentaires</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[430px] pr-4">
+                  <div className="space-y-6">
+                    {mockComments.map((item, index) => (
+                      <div key={index} className="flex items-start gap-4">
+                        <div
+                          className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${item.mood === "Très bien" ? "bg-green-500" : item.mood === "Neutre" ? "bg-sky-500" : item.mood === "Moyen" ? "bg-orange-500" : "bg-red-500"}`}
+                        />
+                        <div>
+                          <p className="font-semibold text-slate-300">
+                            {item.user}{" "}
+                            <span className="text-xs font-normal text-slate-500">
+                              (Équipe {item.manager})
+                            </span>
+                          </p>
+                          <p className="text-sm text-slate-400">
+                            {item.comment}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+            <StatCard
+              icon={<Users className="h-5 w-5 text-slate-500" />}
+              title="Votes Totaux"
+              value={totalVotes}
+            />
+            <StatCard
+              icon={<span className="text-2xl">{dominantMood.emoji}</span>}
+              title="Humeur Dominante"
+              value={dominantMood.name}
+              onMouseEnter={() => setSilkColor(dominantMood.fill)}
+              onMouseLeave={() => setSilkColor(darkThemeColor)}
+            />
+            <StatCard
+              icon={<TrendingUp className="h-5 w-5 text-slate-500" />}
+              title="Taux de Participation"
+              value="85%"
+            />
+          </div>
+        </main>
+      </motion.div>
     </div>
   );
 }
