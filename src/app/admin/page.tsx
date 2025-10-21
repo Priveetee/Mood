@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
 import { PlusCircle, List, BarChart3, Settings } from "lucide-react";
 
@@ -9,24 +10,28 @@ const dashboardItems = [
     title: "Nouvelle Campagne",
     description: "Lancer un nouveau sondage pour les managers.",
     className: "sm:col-span-2",
+    href: "/admin/campaigns/new",
   },
   {
     icon: <List className="h-8 w-8 text-white" />,
     title: "Campagnes Actives",
     description: "Suivre les sondages en cours.",
     className: "",
+    href: "/admin/campaigns/active",
   },
   {
     icon: <BarChart3 className="h-8 w-8 text-white" />,
     title: "Résultats Globaux",
     description: "Analyser les tendances de toutes les campagnes.",
     className: "",
+    href: "#",
   },
   {
     icon: <Settings className="h-8 w-8 text-white" />,
     title: "Paramètres",
     description: "Gérer les administrateurs et les options.",
     className: "sm:col-span-2",
+    href: "#",
   },
 ];
 
@@ -59,13 +64,15 @@ export default function AdminDashboard() {
       <main className="w-full max-w-6xl">
         <BentoGrid>
           {dashboardItems.map((item, i) => (
-            <BentoCard key={i} className={item.className}>
-              <div className="mb-4">{item.icon}</div>
-              <h3 className="text-2xl font-semibold text-white">
-                {item.title}
-              </h3>
-              <p className="text-slate-400 mt-1">{item.description}</p>
-            </BentoCard>
+            <Link key={i} href={item.href} className={item.className}>
+              <BentoCard>
+                <div className="mb-4">{item.icon}</div>
+                <h3 className="text-2xl font-semibold text-white">
+                  {item.title}
+                </h3>
+                <p className="text-slate-400 mt-1">{item.description}</p>
+              </BentoCard>
+            </Link>
           ))}
         </BentoGrid>
       </main>

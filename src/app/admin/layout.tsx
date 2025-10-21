@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Silk from "@/components/Silk";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+//import { Label } from "@/components/ui/label";
 import { Sun, Moon } from "lucide-react";
 
 const lightThemeColor = "#64748b";
