@@ -37,10 +37,14 @@ model PollLink {
   id         String    @id @default(uuid())
   campaignId Int
   campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
   token      String    @unique
+  managerName String
+  
   createdAt  DateTime  @default(now())
 
-  votes Vote[]
+  votes        Vote[]
+  voteAttempts VoteAttempt[]
 
   @@index([campaignId])
 }
@@ -56,10 +60,30 @@ model Vote {
 
   mood      String
   comment   String?
+  
+  ipAddress String
+  userAgent String
+  
   createdAt DateTime  @default(now())
 
   @@unique([userId, pollLinkId])
   @@index([userId])
   @@index([pollLinkId])
   @@index([campaignId])
+}
+
+model VoteAttempt {
+  id        Int       @id @default(autoincrement())
+  pollLinkId String
+  pollLink  PollLink  @relation(fields: [pollLinkId], references: [id], onDelete: Cascade)
+  
+  ipAddress String
+  userAgent String
+  success   Boolean
+  reason    String?
+  
+  createdAt DateTime  @default(now())
+
+  @@index([pollLinkId])
+  @@index([ipAddress])
 }
