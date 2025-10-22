@@ -1,0 +1,65 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  username  String    @unique
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  campaigns Campaign[]
+  votes     Vote[]
+}
+
+model Campaign {
+  id        Int       @id @default(autoincrement())
+  name      String
+  createdBy Int
+  creator   User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  pollLinks PollLink[]
+  votes     Vote[]
+
+  @@index([createdBy])
+}
+
+model PollLink {
+  id         String    @id @default(uuid())
+  campaignId Int
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  token      String    @unique
+  createdAt  DateTime  @default(now())
+
+  votes Vote[]
+
+  @@index([campaignId])
+}
+
+model Vote {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pollLinkId String
+  pollLink   PollLink  @relation(fields: [pollLinkId], references: [id], onDelete: Cascade)
+  campaignId Int
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  mood      String
+  comment   String?
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, pollLinkId])
+  @@index([userId])
+  @@index([pollLinkId])
+  @@index([campaignId])
+}
