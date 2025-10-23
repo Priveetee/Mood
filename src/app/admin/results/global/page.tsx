@@ -486,7 +486,9 @@ export default function GlobalResultsPage() {
                           content={<ChartTooltipContent hideLabel />}
                         />
                         <Pie
-                          data={results.moodDistribution}
+                          data={results.moodDistribution.filter(
+                            (m) => m.votes > 0,
+                          )}
                           dataKey="votes"
                           nameKey="name"
                           innerRadius={80}
@@ -499,13 +501,15 @@ export default function GlobalResultsPage() {
                           }
                           onMouseLeave={() => setSilkColor(darkThemeColor)}
                         >
-                          {results.moodDistribution.map((entry, index) => (
-                            <Cell
-                              key={`cell-${entry.name}-${index}`}
-                              fill={entry.fill}
-                              stroke={entry.fill}
-                            />
-                          ))}
+                          {results.moodDistribution
+                            .filter((m) => m.votes > 0)
+                            .map((entry, index) => (
+                              <Cell
+                                key={`cell-${entry.name}-${index}`}
+                                fill={entry.fill}
+                                stroke={entry.fill}
+                              />
+                            ))}
                         </Pie>
                       </PieChart>
                     </ChartContainer>

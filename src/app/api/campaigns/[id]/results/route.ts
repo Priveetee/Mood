@@ -6,7 +6,7 @@ const JWT_SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const token = req.cookies.get("auth_token")?.value;
@@ -23,7 +23,8 @@ export async function GET(
       return NextResponse.json({ error: "Token invalide" }, { status: 401 });
     }
 
-    const campaignId = parseInt(params.id, 10);
+    const resolvedParams = await params;
+    const campaignId = parseInt(resolvedParams.id, 10);
     if (isNaN(campaignId)) {
       return NextResponse.json(
         { error: "ID de campagne invalide" },
