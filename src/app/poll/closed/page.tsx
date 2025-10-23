@@ -17,8 +17,12 @@ export default function PollClosedPage() {
 
   useEffect(() => {
     const authError = searchParams.get("auth_error");
+    const voted = searchParams.get("voted");
+
     if (authError === "unauthorized") {
       toast.error("Vous n'êtes pas autorisé à consulter cette page.");
+    } else if (voted === "true") {
+      toast.info("Vous avez déjà participé à ce sondage. Merci !");
     }
   }, [searchParams]);
 

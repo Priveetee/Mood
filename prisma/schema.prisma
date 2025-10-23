@@ -8,40 +8,40 @@ generator client {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  username  String    @unique
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  username  String   @unique
   password  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   campaigns Campaign[]
-  votes     Vote[]
+  votes     Vote[]     @relation("UserVotes")
 }
 
 model Campaign {
-  id        Int       @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   name      String
   createdBy Int
-  creator   User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  creator   User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   pollLinks PollLink[]
-  votes     Vote[]
+  votes     Vote[]     @relation("CampaignVotes")
 
   @@index([createdBy])
 }
 
 model PollLink {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   campaignId Int
-  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  
-  token      String    @unique
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  token       String @unique
   managerName String
-  
-  createdAt  DateTime  @default(now())
+
+  createdAt DateTime @default(now())
 
   votes        Vote[]
   voteAttempts VoteAttempt[]
@@ -50,39 +50,42 @@ model PollLink {
 }
 
 model Vote {
-  id         Int       @id @default(autoincrement())
-  userId     Int
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  user       User?    @relation("UserVotes", fields: [userId], references: [id], onDelete: Cascade)
   pollLinkId String
-  pollLink   PollLink  @relation(fields: [pollLinkId], references: [id], onDelete: Cascade)
+  pollLink   PollLink @relation(fields: [pollLinkId], references: [id], onDelete: Cascade)
   campaignId Int
-  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation("CampaignVotes", fields: [campaignId], references: [id], onDelete: Cascade)
 
-  mood      String
-  comment   String?
-  
+  mood    String
+  comment String?
+
   ipAddress String
   userAgent String
-  
-  createdAt DateTime  @default(now())
 
+  createdAt DateTime @default(now())
+
+  @@unique([pollLinkId, ipAddress])
   @@unique([userId, pollLinkId])
   @@index([userId])
   @@index([pollLinkId])
   @@index([campaignId])
+  @@index([ipAddress])
+  @@index([userAgent])
 }
 
 model VoteAttempt {
-  id        Int       @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   pollLinkId String
-  pollLink  PollLink  @relation(fields: [pollLinkId], references: [id], onDelete: Cascade)
-  
+  pollLink   PollLink @relation(fields: [pollLinkId], references: [id], onDelete: Cascade)
+
   ipAddress String
   userAgent String
   success   Boolean
   reason    String?
-  
-  createdAt DateTime  @default(now())
+
+  createdAt DateTime @default(now())
 
   @@index([pollLinkId])
   @@index([ipAddress])

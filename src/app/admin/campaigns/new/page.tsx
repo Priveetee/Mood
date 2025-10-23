@@ -25,12 +25,18 @@ const itemVariants = {
   exit: { scale: 0.9, opacity: 0 },
 };
 
+interface GeneratedLink {
+  managerName: string;
+  url: string;
+}
+
 export default function NewCampaignPage() {
   const [isGenerated, setIsGenerated] = useState(false);
   const [campaignName, setCampaignName] = useState("");
   const [currentManager, setCurrentManager] = useState("");
   const [managers, setManagers] = useState<string[]>([]);
-  const [mockGeneratedLinks, setMockGeneratedLinks] = useState<string[]>([]);
+  const [generatedLinks, setGeneratedLinks] = useState<GeneratedLink[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAddManager = () => {
     if (currentManager.trim() && !managers.includes(currentManager.trim())) {
@@ -45,16 +51,36 @@ export default function NewCampaignPage() {
     toast.error(`Manager "${managerToRemove}" supprimé.`);
   };
 
-  const handleGenerate = () => {
-    const links = managers.map(
-      (name) =>
-        `${name}: https://mood.app/p/${Math.random().toString(36).substr(2, 8)}`,
-    );
-    setMockGeneratedLinks(links);
-    setIsGenerated(true);
-    toast.success(
-      `Campagne "${campaignName}" générée avec ${links.length} liens.`,
-    );
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: campaignName,
+          managers: managers,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur de création de campagne");
+      }
+
+      setGeneratedLinks(data.generatedLinks);
+      setIsGenerated(true);
+      toast.success(
+        `Campagne "${campaignName}" générée avec ${data.generatedLinks.length} liens.`,
+      );
+    } catch (error: any) {
+      toast.error(error.message || "Échec de la création de la campagne.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const copyToClipboard = (text: string, message: string) => {
@@ -64,12 +90,16 @@ export default function NewCampaignPage() {
   };
 
   const handleCopyAll = () => {
-    const allLinks = mockGeneratedLinks.join("\n");
+    const allLinks = generatedLinks
+      .map((link) => `${link.managerName}: ${link.url}`)
+      .join("\n");
     copyToClipboard(allLinks, "Tous les liens ont été copiés.");
   };
 
   const handleSendEmail = () => {
-    const allLinks = mockGeneratedLinks.join("\n");
+    const allLinks = generatedLinks
+      .map((link) => `${link.managerName}: ${link.url}`)
+      .join("\n");
     const subject = `Liens pour la campagne de sondage: ${campaignName}`;
     const body = `Bonjour,\n\nVoici les liens de sondage pour vos équipes respectives :\n\n${allLinks}\n\nCordialement.`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -112,7 +142,7 @@ export default function NewCampaignPage() {
                       {campaignName} - Liens
                     </CardTitle>
                     <p className="text-slate-400 mt-1">
-                      {mockGeneratedLinks.length} liens ont été créés.
+                      {generatedLinks.length} liens ont été créés.
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -140,18 +170,21 @@ export default function NewCampaignPage() {
                       animate="visible"
                       className="space-y-3 pr-6"
                     >
-                      {mockGeneratedLinks.map((link, index) => (
+                      {generatedLinks.map((link, index) => (
                         <motion.div variants={itemVariants} key={index}>
                           <div className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 p-4">
                             <span className="text-slate-300 font-mono text-sm">
-                              {link}
+                              {link.managerName}: {link.url}
                             </span>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-slate-400"
                               onClick={() =>
-                                copyToClipboard(link, "Lien copié !")
+                                copyToClipboard(
+                                  `${link.managerName}: ${link.url}`,
+                                  "Lien copié !",
+                                )
                               }
                             >
                               <Copy className="h-4 w-4" />
@@ -203,6 +236,7 @@ export default function NewCampaignPage() {
                       size="icon"
                       className="h-12 w-12 flex-shrink-0"
                       onClick={handleAddManager}
+                      disabled={!currentManager.trim()}
                     >
                       <Plus className="h-5 w-5" />
                     </Button>
@@ -241,9 +275,15 @@ export default function NewCampaignPage() {
                   <Button
                     onClick={handleGenerate}
                     className="w-full h-12 text-lg font-semibold"
-                    disabled={!campaignName || managers.length === 0}
+                    disabled={
+                      !campaignName || managers.length === 0 || isLoading
+                    }
                   >
-                    Générer les liens
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-slate-100 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      "Générer les liens"
+                    )}
                   </Button>
                 </CardContent>
               </Card>
