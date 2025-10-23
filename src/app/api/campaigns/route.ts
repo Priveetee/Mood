@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import prisma from "@/lib/prisma";
 import { jwtVerify } from "jose";
+import { cookies } from "next/headers";
 
 const JWT_SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function POST(req: Request) {
   try {
-    const token = req.cookies.get("auth_token")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -40,7 +42,7 @@ export async function POST(req: Request) {
 
     const pollLinksData = managers.map((managerName: string) => ({
       campaignId: campaign.id,
-      uniqueLink: nanoid(10),
+      token: nanoid(10),
       managerName,
     }));
 
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
 
     const generatedLinks = pollLinks.map((link) => ({
       managerName: link.managerName,
-      url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001"}/poll/${link.uniqueLink}`,
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/poll/${link.token}`,
     }));
 
     return NextResponse.json(
@@ -71,7 +73,8 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const token = req.cookies.get("auth_token")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
