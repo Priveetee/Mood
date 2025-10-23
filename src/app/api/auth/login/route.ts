@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { SignJWT } from "jose";
 import prisma from "@/lib/prisma";
 
 export async function POST(req: Request) {
@@ -34,17 +34,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN },
-    );
+    const token = await new SignJWT({ userId: user.id, email: user.email })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime(process.env.JWT_EXPIRES_IN!)
+      .sign(new TextEncoder().encode(process.env.JWT_SECRET!));
+
+    let maxAgeSeconds = 14400;
+    const expires = process.env.JWT_EXPIRES_IN;
+    if (expires) {
+      const match = expires.match(/^(\d+)([smhd])$/);
+      if (match) {
+        const value = parseInt(match[1]);
+        const unit = match[2];
+        if (unit === "s") maxAgeSeconds = value;
+        else if (unit === "m") maxAgeSeconds = value * 60;
+        else if (unit === "h") maxAgeSeconds = value * 3600;
+        else if (unit === "h") maxAgeSeconds = value * 14400;
+      }
+    }
 
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: parseInt(process.env.JWT_EXPIRES_IN || "86400") * 1000,
+      sameSite: "lax" as const,
+      maxAge: maxAgeSeconds * 1000,
       path: "/",
     };
 

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || "a-fallback-secret-if-env-is-missing";
+const JWT_SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function middleware(request: NextRequest) {
   const adminPathPrefix = "/admin";
@@ -14,12 +13,23 @@ export async function middleware(request: NextRequest) {
 
   let isAuthenticated = false;
 
+  console.log("Middleware Path:", request.nextUrl.pathname);
+  console.log(
+    "Middleware Retrieved token:",
+    token ? "Token present" : "No token",
+  );
+
   if (token) {
     try {
-      jwt.verify(token, JWT_SECRET);
+      await jwtVerify(token, JWT_SECRET_KEY);
       isAuthenticated = true;
-    } catch (error) {
+      console.log("Middleware: Token successfully verified with JOSE.");
+    } catch (error: any) {
       isAuthenticated = false;
+      console.error(
+        "Middleware: JOSE token verification failed:",
+        error.message,
+      );
     }
   }
 

@@ -1,8 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect } from "react";
 import { ShieldX } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 const FaultyTerminal = dynamic(() => import("@/components/FaultyTerminal"), {
   ssr: false,
@@ -10,6 +13,15 @@ const FaultyTerminal = dynamic(() => import("@/components/FaultyTerminal"), {
 });
 
 export default function PollClosedPage() {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const authError = searchParams.get("auth_error");
+    if (authError === "unauthorized") {
+      toast.error("Vous n'êtes pas autorisé à consulter cette page.");
+    }
+  }, [searchParams]);
+
   return (
     <>
       <div className="fixed top-0 left-0 -z-10 h-screen w-screen">
@@ -39,8 +51,8 @@ export default function PollClosedPage() {
           <CardContent className="flex flex-col items-center space-y-4 p-8 pt-2">
             <ShieldX className="h-20 w-20 text-red-500" />
             <p className="text-center text-slate-400">
-              Il n'est plus possible de participer à ce sondage. Merci de votre
-              intérêt.
+              Il n&apos;est plus possible de participer à ce sondage. Merci de
+              votre intérêt.
             </p>
           </CardContent>
         </Card>
