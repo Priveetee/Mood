@@ -42,10 +42,6 @@ export async function POST(req: Request) {
       ipAddress = "127.0.0.1";
     }
 
-    console.log(
-      `[POST /api/votes] PollLink: ${pollLinkId}, Normalized IP: ${ipAddress}, UA: ${userAgent}, Mood: ${mood}`,
-    );
-
     const existingVote = await prisma.vote.findFirst({
       where: {
         pollLinkId: pollLink.id,
@@ -63,9 +59,10 @@ export async function POST(req: Request) {
           reason: "Double vote détecté (même IP pour ce lien)",
         },
       });
+      const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/poll/closed?voted=true`;
       return NextResponse.json(
-        { error: "Vous avez déjà voté pour ce sondage" },
-        { status: 409 },
+        { error: "Vous avez déjà voté pour ce sondage", redirect: redirectUrl },
+        { status: 409, headers: { Location: redirectUrl } },
       );
     }
 
@@ -100,12 +97,12 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error(`[POST /api/votes] Erreur: ${error}`);
     if (
       (error as any).code === "P2002" &&
       (error as any).meta?.target.includes("pollLinkId") &&
       (error as any).meta?.target.includes("ipAddress")
     ) {
+      const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/poll/closed?voted=true`;
       await prisma.voteAttempt.create({
         data: {
           pollLinkId: (req as any).body.pollLinkId,
@@ -122,8 +119,8 @@ export async function POST(req: Request) {
         },
       });
       return NextResponse.json(
-        { error: "Vous avez déjà voté pour ce sondage" },
-        { status: 409 },
+        { error: "Vous avez déjà voté pour ce sondage", redirect: redirectUrl },
+        { status: 409, headers: { Location: redirectUrl } },
       );
     }
     return NextResponse.json(

@@ -59,14 +59,12 @@ export default function PollPage() {
         } else {
           if (data.hasVoted) {
             setHasVoted(true);
-            toast.info("Vous avez déjà voté pour ce sondage. Merci !");
-            router.replace("/poll/closed?voted=true");
+            toast.info("Vous avez déjà voté pour ce sondage.");
           } else {
             setHasVoted(false);
           }
         }
       } catch (error) {
-        console.error("Failed to check poll status:", error);
         setPollExists(false);
         toast.error("Erreur de connexion au serveur de sondage.");
         router.replace("/poll/closed");
@@ -114,6 +112,11 @@ export default function PollPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 409 && data.redirect) {
+          toast.info(data.error || "Vous avez déjà voté pour ce sondage.");
+          router.replace(data.redirect);
+          return;
+        }
         throw new Error(
           data.error || "Erreur lors de l'enregistrement du vote.",
         );
@@ -163,7 +166,7 @@ export default function PollPage() {
               value={selectedMood ?? ""}
               onValueChange={handleMoodChange}
               className="flex w-full items-center justify-between"
-              disabled={hasVoted || isLoading}
+              disabled={isLoading}
             >
               {moods.map((mood) => (
                 <ToggleGroupItem
@@ -200,13 +203,13 @@ export default function PollPage() {
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="min-h-[120px] resize-none border-slate-700 bg-slate-900/80 placeholder:text-slate-500"
-                  disabled={hasVoted || isLoading}
+                  disabled={isLoading}
                 />
               </div>
               <Button
                 type="submit"
                 className="h-12 w-full bg-slate-200 text-lg font-bold text-slate-900 transition-colors hover:bg-slate-300"
-                disabled={!selectedMood || hasVoted || isLoading}
+                disabled={!selectedMood || isLoading}
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-slate-800 border-t-transparent rounded-full animate-spin" />
