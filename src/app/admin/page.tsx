@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
-import { PlusCircle, List, BarChart3, Github } from "lucide-react";
+import { PlusCircle, List, BarChart3, Github, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const dashboardItems = [
   {
@@ -36,6 +39,8 @@ const dashboardItems = [
 ];
 
 export default function AdminDashboard() {
+  const router = useRouter();
+
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const cards = document.getElementsByClassName("card--border-glow");
     for (const card of Array.from(cards)) {
@@ -47,18 +52,38 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) {
+        throw new Error("Erreur de déconnexion");
+      }
+      toast.success("Déconnecté avec succès !");
+      router.push("/login");
+    } catch (error: any) {
+      toast.error(error.message || "Échec de la déconnexion.");
+    }
+  };
+
   return (
     <div
       className="flex min-h-screen flex-col items-center justify-center p-8"
       onMouseMove={onMouseMove}
     >
-      <header className="text-center mb-12">
+      <header className="text-center mb-12 relative w-full max-w-6xl">
         <h1 className="text-5xl font-bold tracking-tight">
           Dashboard Administrateur
         </h1>
         <p className="text-slate-400 mt-2">
           Gérez vos campagnes et analysez les résultats.
         </p>
+        <Button
+          onClick={handleLogout}
+          variant="ghost"
+          className="absolute top-0 right-0 text-slate-400 hover:text-white"
+        >
+          <LogOut className="h-5 w-5 mr-2" /> Se déconnecter
+        </Button>
       </header>
 
       <main className="w-full max-w-6xl">

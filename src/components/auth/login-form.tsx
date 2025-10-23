@@ -39,7 +39,6 @@ export default function LoginForm() {
           setActiveTab("login");
         }
       } catch (error) {
-        console.error("Failed to fetch can-register status:", error);
         toast.error("Erreur de connexion au serveur d'authentification.");
       }
     }
@@ -81,7 +80,7 @@ export default function LoginForm() {
           email: registerEmail,
           username: registerUsername,
           password: registerPassword,
-          invitationKey: canRegister ? invitationKey : undefined,
+          invitationKey: invitationKey,
         }),
       });
 
@@ -94,7 +93,6 @@ export default function LoginForm() {
       toast.success("Compte créé avec succès !");
       router.push("/admin");
     } catch (error: any) {
-      console.error("Registration error:", error.message);
       toast.error(error.message || "Échec de l'enregistrement.");
     } finally {
       setIsLoading(false);
@@ -125,7 +123,6 @@ export default function LoginForm() {
       toast.success("Connecté avec succès !");
       router.push("/admin");
     } catch (error: any) {
-      console.error("Login error:", error.message);
       toast.error(error.message || "Échec de la connexion.");
     } finally {
       setIsLoading(false);
@@ -327,8 +324,8 @@ export default function LoginForm() {
                           htmlFor="invitation-key"
                           className="text-slate-300 font-medium"
                         >
-                          Clé d&apos;invitation (requise si c'est le premier
-                          compte)
+                          Clé d&apos;invitation (requise si c&apos;est le
+                          premier compte)
                         </Label>
                         <div className="relative">
                           <KeyRound className="absolute left-3 top-3.5 h-5 w-5 text-slate-500" />

@@ -13,23 +13,12 @@ export async function middleware(request: NextRequest) {
 
   let isAuthenticated = false;
 
-  console.log("Middleware Path:", request.nextUrl.pathname);
-  console.log(
-    "Middleware Retrieved token:",
-    token ? "Token present" : "No token",
-  );
-
   if (token) {
     try {
       await jwtVerify(token, JWT_SECRET_KEY);
       isAuthenticated = true;
-      console.log("Middleware: Token successfully verified with JOSE.");
     } catch (error: any) {
       isAuthenticated = false;
-      console.error(
-        "Middleware: JOSE token verification failed:",
-        error.message,
-      );
     }
   }
 
