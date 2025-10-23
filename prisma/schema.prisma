@@ -26,6 +26,7 @@ model Campaign {
   creator   User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  archived  Boolean  @default(false)
 
   pollLinks PollLink[]
   votes     Vote[]     @relation("CampaignVotes")
