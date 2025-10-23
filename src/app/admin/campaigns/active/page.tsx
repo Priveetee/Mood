@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -13,32 +14,53 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
-const mockActiveCampaigns = [
-  {
-    id: "cam_1",
-    name: "Sondage T3 2025",
-    managerCount: 32,
-    creationDate: "15/09/2025",
-    progress: 75,
-  },
-  {
-    id: "cam_3",
-    name: "Pulse Check H1 2026",
-    managerCount: 35,
-    creationDate: "02/01/2026",
-    progress: 22,
-  },
-  {
-    id: "cam_4",
-    name: "Feedback Projet Phoenix",
-    managerCount: 12,
-    creationDate: "18/10/2025",
-    progress: 91,
-  },
-];
+interface Campaign {
+  id: number;
+  name: string;
+  managerCount: number;
+  creationDate: string;
+  progress: number;
+  totalVotes: number;
+}
 
 export default function ActiveCampaignsPage() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCampaigns() {
+      try {
+        const response = await fetch("/api/campaigns");
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || "Erreur lors de la récupération des campagnes.",
+          );
+        }
+
+        setCampaigns(data);
+      } catch (error: any) {
+        toast.error(
+          error.message || "Échec du chargement des campagnes actives.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchCampaigns();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
       <Link
@@ -62,55 +84,80 @@ export default function ActiveCampaignsPage() {
 
         <main className="max-w-7xl mx-auto">
           <div className="bg-slate-900 border border-slate-800 rounded-xl">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-slate-800 hover:bg-transparent">
-                  <TableHead className="text-white">
-                    Nom de la campagne
-                  </TableHead>
-                  <TableHead className="text-white text-center">
-                    Managers
-                  </TableHead>
-                  <TableHead className="text-white">Date de Création</TableHead>
-                  <TableHead className="text-white w-[250px]">
-                    Progression
-                  </TableHead>
-                  <TableHead className="text-right text-white"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockActiveCampaigns.map((campaign) => (
-                  <TableRow
-                    key={campaign.id}
-                    className="border-slate-800 hover:bg-slate-900/80"
-                  >
-                    <TableCell className="font-medium">
-                      {campaign.name}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {campaign.managerCount}
-                    </TableCell>
-                    <TableCell>{campaign.creationDate}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Progress
-                          value={campaign.progress}
-                          className="bg-slate-700 h-2"
-                        />
-                        <span className="text-sm text-slate-400">
-                          {campaign.progress}%
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="gap-2">
-                        Voir les résultats <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+            {campaigns.length === 0 ? (
+              <div className="p-8 text-center text-slate-400">
+                Aucune campagne active pour le moment.
+                <Link
+                  href="/admin/campaigns/new"
+                  className="text-white hover:underline ml-2"
+                >
+                  Créer une nouvelle campagne.
+                </Link>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-slate-800 hover:bg-transparent">
+                    <TableHead className="text-white">
+                      Nom de la campagne
+                    </TableHead>
+                    <TableHead className="text-white text-center">
+                      Liens générés
+                    </TableHead>
+                    <TableHead className="text-white text-center">
+                      Votes reçus
+                    </TableHead>
+                    <TableHead className="text-white">
+                      Date de Création
+                    </TableHead>
+                    <TableHead className="text-white w-[250px]">
+                      Progression
+                    </TableHead>
+                    <TableHead className="text-right text-white"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {campaigns.map((campaign) => (
+                    <TableRow
+                      key={campaign.id}
+                      className="border-slate-800 hover:bg-slate-900/80"
+                    >
+                      <TableCell className="font-medium">
+                        {campaign.name}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {campaign.managerCount}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {campaign.totalVotes}
+                      </TableCell>
+                      <TableCell>{campaign.creationDate}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Progress
+                            value={campaign.progress}
+                            className="bg-slate-700 h-2"
+                          />
+                          <span className="text-sm text-slate-400">
+                            {campaign.progress}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link
+                          href={`/admin/results/global?campaignId=${campaign.id}`}
+                        >
+                          <Button variant="ghost" size="sm" className="gap-2">
+                            Voir les résultats{" "}
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </main>
       </motion.div>

@@ -10,7 +10,6 @@ import {
   Calendar as CalendarIcon,
   TrendingUp,
   Users,
-  Smile,
   FileDown,
 } from "lucide-react";
 import { DateRange } from "react-day-picker";
@@ -46,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSearchParams } from "next/navigation";
 
 const calendarClassNames = {
   months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
@@ -65,53 +65,76 @@ const calendarClassNames = {
     "aria-selected:bg-slate-800/50 aria-selected:text-slate-100",
 };
 
-const moods = [
-  { name: "Très bien", votes: 275, fill: "#22c55e", emoji: "😄" },
-  { name: "Neutre", votes: 200, fill: "#38bdf8", emoji: "🙂" },
-  { name: "Moyen", votes: 187, fill: "#f97316", emoji: "😕" },
-  { name: "Pas bien", votes: 90, fill: "#ef4444", emoji: "😠" },
-];
-
 const chartConfig = {
   votes: { label: "Votes" },
-  "Très bien": { label: "Très bien" },
-  Neutre: { label: "Neutre" },
-  Moyen: { label: "Moyen" },
-  "Pas bien": { label: "Pas bien" },
+  "Très bien": { label: "Très bien", color: "#22c55e" },
+  Neutre: { label: "Neutre", color: "#38bdf8" },
+  Moyen: { label: "Moyen", color: "#f97316" },
+  "Pas bien": { label: "Pas bien", color: "#ef4444" },
 } satisfies ChartConfig;
 
-const mockComments = [
-  {
-    user: "user_123",
-    manager: "Manager A",
-    comment: "Super semaine, l'équipe est au top !",
-    mood: "Très bien",
-  },
-  {
-    user: "user_456",
-    manager: "Manager C",
-    comment: "Difficultés sur le projet X, besoin de support.",
-    mood: "Moyen",
-  },
-  {
-    user: "user_789",
-    manager: "Manager B",
-    comment: "RAS, tout se passe comme prévu.",
-    mood: "Neutre",
-  },
-  {
-    user: "user_101",
-    manager: "Manager C",
-    comment: "Encore des blocages, la pression monte.",
-    mood: "Pas bien",
-  },
-  {
-    user: "user_112",
-    manager: "Manager A",
-    comment: "Objectif atteint en avance, bravo à tous !",
-    mood: "Très bien",
-  },
-];
+interface MoodData {
+  name: string;
+  votes: number;
+  fill: string;
+  emoji: string;
+}
+
+interface CommentData {
+  user: string;
+  manager: string;
+  comment: string;
+  mood: string;
+}
+
+interface ResultsData {
+  totalVotes: number;
+  moodDistribution: MoodData[];
+  comments: CommentData[];
+  dominantMood: string;
+  dominantMoodEmoji: string;
+  participationRate: string;
+  campaignName: string;
+}
+
+interface CampaignOption {
+  id: number;
+  name: string;
+}
+
+const RADIAN = Math.PI / 180;
+const CustomizedLabel = ({
+  cx,
+  cy,
+  midAngle,
+  outerRadius,
+  payload,
+}: {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  outerRadius: number;
+  payload: { emoji: string };
+}) => {
+  const radius = outerRadius + 25;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="white"
+      textAnchor={x > cx ? "start" : "end"}
+      dominantBaseline="central"
+      className="text-2xl"
+    >
+      {payload.emoji}
+    </text>
+  );
+};
+
+const darkThemeColor = "#3f3f5a";
 
 const StatCard = ({
   icon,
@@ -143,36 +166,32 @@ const StatCard = ({
   </Card>
 );
 
-const RADIAN = Math.PI / 180;
-const CustomizedLabel = ({ cx, cy, midAngle, outerRadius, payload }: any) => {
-  const radius = outerRadius + 25;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <text
-      x={x}
-      y={y}
-      fill="white"
-      textAnchor={x > cx ? "start" : "end"}
-      dominantBaseline="central"
-      className="text-2xl"
-    >
-      {payload.emoji}
-    </text>
-  );
-};
-
-const darkThemeColor = "#3f3f5a";
-
 export default function GlobalResultsPage() {
+  const searchParams = useSearchParams();
+  const initialCampaignId = searchParams.get("campaignId")
+    ? parseInt(searchParams.get("campaignId")!, 10)
+    : undefined;
+
   const [isClient, setIsClient] = React.useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(2025, 0, 1),
-    to: new Date(2025, 10, 28),
+  const [dateRange, setDateRange] = React.useState<DateRange | undefined>({
+    from: new Date(new Date().getFullYear(), 0, 1),
+    to: new Date(),
   });
+  const [selectedCampaignId, setSelectedCampaignId] = React.useState<
+    number | "all"
+  >(initialCampaignId || "all");
+  const [selectedManager, setSelectedManager] = React.useState<string | "all">(
+    "all",
+  );
   const { setSilkColor } = useTheme();
+
+  const [campaignOptions, setCampaignOptions] = React.useState<
+    CampaignOption[]
+  >([]);
+  const [managerOptions, setManagerOptions] = React.useState<string[]>([]);
+  const [results, setResults] = React.useState<ResultsData | null>(null);
+  const [isLoadingResults, setIsLoadingResults] = React.useState(true);
 
   React.useEffect(() => {
     setIsClient(true);
@@ -180,13 +199,122 @@ export default function GlobalResultsPage() {
   }, [setSilkColor]);
 
   React.useEffect(() => {
-    if (isClient && !isPopoverOpen) {
-      toast.info("Filtres de date appliqués.");
+    async function fetchCampaignOptions() {
+      try {
+        const response = await fetch("/api/campaigns"); // CORRECTION: URL est bonne
+        if (!response.ok) {
+          throw new Error("Failed to fetch campaigns");
+        }
+        const data = await response.json();
+        setCampaignOptions(data);
+      } catch (error: any) {
+        toast.error("Impossible de charger les options de campagne.");
+      }
     }
-  }, [date, isPopoverOpen, isClient]);
+    fetchCampaignOptions();
+  }, []);
 
-  const dominantMood = moods.sort((a, b) => b.votes - a.votes)[0];
-  const totalVotes = moods.reduce((acc, cur) => acc + cur.votes, 0);
+  React.useEffect(() => {
+    async function fetchManagerOptions() {
+      if (selectedCampaignId && selectedCampaignId !== "all") {
+        try {
+          const response = await fetch(
+            `/api/campaigns/${selectedCampaignId}/managers`,
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch managers");
+          }
+          const data = await response.json();
+          setManagerOptions(data);
+          setSelectedManager("all");
+        } catch (error: any) {
+          toast.error("Impossible de charger les options de managers.");
+        }
+      } else {
+        setManagerOptions([]);
+        setSelectedManager("all");
+      }
+    }
+    fetchManagerOptions();
+  }, [selectedCampaignId]);
+
+  React.useEffect(() => {
+    async function fetchResults() {
+      setIsLoadingResults(true);
+      let url: string;
+      const params = new URLSearchParams();
+
+      if (selectedCampaignId === "all") {
+        url = `/api/results/global`;
+      } else {
+        url = `/api/campaigns/${selectedCampaignId}/results`;
+        if (selectedManager && selectedManager !== "all") {
+          params.append("managerName", selectedManager);
+        }
+      }
+
+      if (dateRange?.from) {
+        params.append("startDate", dateRange.from.toISOString());
+      }
+      if (dateRange?.to) {
+        params.append("endDate", dateRange.to.toISOString());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to fetch results");
+        }
+        const data = await response.json();
+        setResults(data);
+      } catch (error: any) {
+        toast.error(error.message);
+        setResults(null);
+      } finally {
+        setIsLoadingResults(false);
+      }
+    }
+
+    if (selectedCampaignId !== undefined) {
+      fetchResults();
+    }
+  }, [selectedCampaignId, dateRange, selectedManager]);
+
+  const handleExportCSV = () => {
+    if (!results || results.comments.length === 0) {
+      toast.info("Aucune donnée à exporter.");
+      return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent +=
+      "Campaign Name,Total Votes,Mood Distribution,Dominant Mood,Participation Rate,Commenter IP,Manager,Comment,Mood\n";
+
+    const moodSummary = results.moodDistribution
+      .map((m) => `${m.name}: ${m.votes}`)
+      .join("; ");
+
+    results.comments.forEach((comment) => {
+      csvContent += `"${results.campaignName}",${results.totalVotes},"${moodSummary}","${results.dominantMood}",${results.participationRate},"${comment.user}","${comment.manager}","${comment.comment}","${comment.mood}"\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `mood_results_${results.campaignName.replace(/\s/g, "_")}_${format(new Date(), "yyyyMMdd")}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Données exportées avec succès !");
+  };
 
   return (
     <div className="p-8">
@@ -214,20 +342,47 @@ export default function GlobalResultsPage() {
             <div className="flex items-center gap-4">
               {isClient && (
                 <>
-                  <Select defaultValue="all">
+                  <Select
+                    value={selectedCampaignId.toString()}
+                    onValueChange={(value) =>
+                      setSelectedCampaignId(
+                        value === "all" ? "all" : parseInt(value, 10),
+                      )
+                    }
+                  >
                     <SelectTrigger className="w-[280px] h-11 bg-slate-800 border-slate-700 text-white">
                       <SelectValue placeholder="Toutes les campagnes" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-800 text-white">
                       <SelectItem value="all">Toutes les campagnes</SelectItem>
+                      {campaignOptions.map((campaign) => (
+                        <SelectItem
+                          key={campaign.id}
+                          value={campaign.id.toString()}
+                        >
+                          {campaign.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                  <Select defaultValue="all">
+                  <Select
+                    value={selectedManager.toString()}
+                    onValueChange={(value) => setSelectedManager(value)}
+                    disabled={
+                      selectedCampaignId === "all" ||
+                      managerOptions.length === 0
+                    }
+                  >
                     <SelectTrigger className="w-[280px] h-11 bg-slate-800 border-slate-700 text-white">
                       <SelectValue placeholder="Tous les managers" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-800 text-white">
                       <SelectItem value="all">Tous les managers</SelectItem>
+                      {managerOptions.map((manager) => (
+                        <SelectItem key={manager} value={manager}>
+                          {manager}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </>
@@ -242,18 +397,18 @@ export default function GlobalResultsPage() {
                       variant={"outline"}
                       className={cn(
                         "w-[300px] h-11 justify-start text-left font-normal bg-slate-800 border-slate-700 hover:bg-slate-700 text-white",
-                        !date && "text-slate-400",
+                        !dateRange && "text-slate-400",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date?.from ? (
-                        date.to ? (
+                      {dateRange?.from ? (
+                        dateRange.to ? (
                           <>
-                            {format(date.from, "LLL dd, y")} -{" "}
-                            {format(date.to, "LLL dd, y")}
+                            {format(dateRange.from, "LLL dd, y")} -{" "}
+                            {format(dateRange.to, "LLL dd, y")}
                           </>
                         ) : (
-                          format(date.from, "LLL dd, y")
+                          format(dateRange.from, "LLL dd, y")
                         )
                       ) : (
                         <span>Choisissez une période</span>
@@ -276,9 +431,9 @@ export default function GlobalResultsPage() {
                           <Calendar
                             initialFocus
                             mode="range"
-                            defaultMonth={date?.from}
-                            selected={date}
-                            onSelect={setDate}
+                            defaultMonth={dateRange?.from}
+                            selected={dateRange}
+                            onSelect={setDateRange}
                             numberOfMonths={2}
                             classNames={calendarClassNames}
                           />
@@ -291,6 +446,10 @@ export default function GlobalResultsPage() {
               <Button
                 variant="outline"
                 className="h-11 gap-2 bg-slate-800 border-slate-700 text-white hover:bg-slate-700 hover:text-white"
+                onClick={handleExportCSV}
+                disabled={
+                  isLoadingResults || !results || results.comments.length === 0
+                }
               >
                 <FileDown className="h-4 w-4" />
                 Exporter (CSV)
@@ -298,106 +457,147 @@ export default function GlobalResultsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card className="flex flex-col bg-slate-900 border-slate-800 text-white">
-              <CardHeader className="items-center pb-0">
-                <CardTitle>Répartition des Humeurs</CardTitle>
-                <CardDescription>Période sélectionnée</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 pb-0">
-                <ChartContainer
-                  config={chartConfig}
-                  className="mx-auto aspect-square max-h-[350px]"
-                >
-                  <PieChart>
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent hideLabel />}
-                    />
-                    <Pie
-                      data={moods}
-                      dataKey="votes"
-                      nameKey="mood"
-                      innerRadius={80}
-                      outerRadius={120}
-                      strokeWidth={5}
-                      labelLine={false}
-                      label={<CustomizedLabel />}
-                      onMouseEnter={(data) => setSilkColor(data.fill)}
-                      onMouseLeave={() => setSilkColor(darkThemeColor)}
+          {isLoadingResults ? (
+            <div className="flex min-h-[400px] items-center justify-center">
+              <div className="w-8 h-8 border-4 border-slate-200 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : !results ? (
+            <div className="p-8 text-center text-slate-400">
+              {selectedCampaignId === "all"
+                ? "Aucun résultat disponible pour toutes les campagnes. Créez une campagne et recevez des votes."
+                : "Aucun résultat disponible pour la sélection. Essayez d'ajuster les filtres."}
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <Card className="flex flex-col bg-slate-900 border-slate-800 text-white">
+                  <CardHeader className="items-center pb-0">
+                    <CardTitle>Répartition des Humeurs</CardTitle>
+                    <CardDescription>Période sélectionnée</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 pb-0">
+                    <ChartContainer
+                      config={chartConfig}
+                      className="mx-auto aspect-square max-h-[350px]"
                     >
-                      {moods.map((entry) => (
-                        <Cell
-                          key={`cell-${entry.name}`}
-                          fill={entry.fill}
-                          stroke={entry.fill}
+                      <PieChart>
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent hideLabel />}
                         />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter className="flex-col gap-2 text-sm">
-                <div className="flex items-center gap-2 font-medium leading-none text-slate-300">
-                  Tendance positive de 3.4% ce mois-ci{" "}
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                </div>
-                <div className="leading-none text-slate-500">
-                  Affichage des résultats pour la période complète
-                </div>
-              </CardFooter>
-            </Card>
+                        <Pie
+                          data={results.moodDistribution}
+                          dataKey="votes"
+                          nameKey="name"
+                          innerRadius={80}
+                          outerRadius={120}
+                          strokeWidth={5}
+                          labelLine={false}
+                          label={CustomizedLabel}
+                          onMouseEnter={(data: MoodData) =>
+                            setSilkColor(data.fill)
+                          }
+                          onMouseLeave={() => setSilkColor(darkThemeColor)}
+                        >
+                          {results.moodDistribution.map((entry, index) => (
+                            <Cell
+                              key={`cell-${entry.name}-${index}`}
+                              fill={entry.fill}
+                              stroke={entry.fill}
+                            />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ChartContainer>
+                  </CardContent>
+                  <CardFooter className="flex-col gap-2 text-sm">
+                    <div className="flex items-center gap-2 font-medium leading-none text-slate-300">
+                      Tendance positive de 3.4% ce mois-ci{" "}
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                    </div>
+                    <div className="leading-none text-slate-500">
+                      Affichage des résultats pour la période complète
+                    </div>
+                  </CardFooter>
+                </Card>
 
-            <Card className="flex flex-col bg-slate-900 border-slate-800 text-white">
-              <CardHeader>
-                <CardTitle>Derniers Commentaires</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[430px] pr-4">
-                  <div className="space-y-6">
-                    {mockComments.map((item, index) => (
-                      <div key={index} className="flex items-start gap-4">
-                        <div
-                          className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${item.mood === "Très bien" ? "bg-green-500" : item.mood === "Neutre" ? "bg-sky-500" : item.mood === "Moyen" ? "bg-orange-500" : "bg-red-500"}`}
-                        />
-                        <div>
-                          <p className="font-semibold text-slate-300">
-                            {item.user}{" "}
-                            <span className="text-xs font-normal text-slate-500">
-                              (Équipe {item.manager})
-                            </span>
+                <Card className="flex flex-col bg-slate-900 border-slate-800 text-white">
+                  <CardHeader>
+                    <CardTitle>Derniers Commentaires</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[430px] pr-4">
+                      <div className="space-y-6">
+                        {results.comments.length === 0 ? (
+                          <p className="text-slate-400 text-center">
+                            Aucun commentaire pour cette sélection.
                           </p>
-                          <p className="text-sm text-slate-400">
-                            {item.comment}
-                          </p>
-                        </div>
+                        ) : (
+                          results.comments.map((item, index) => (
+                            <div key={index} className="flex items-start gap-4">
+                              <div
+                                className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${
+                                  item.mood === "green"
+                                    ? "bg-green-500"
+                                    : item.mood === "blue"
+                                      ? "bg-sky-500"
+                                      : item.mood === "yellow"
+                                        ? "bg-orange-500"
+                                        : item.mood === "red"
+                                          ? "bg-red-500"
+                                          : ""
+                                }`}
+                              />
+                              <div>
+                                <p className="font-semibold text-slate-300">
+                                  {item.user}{" "}
+                                  <span className="text-xs font-normal text-slate-500">
+                                    (Équipe {item.manager})
+                                  </span>
+                                </p>
+                                <p className="text-sm text-slate-400">
+                                  {item.comment}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-            <StatCard
-              icon={<Users className="h-5 w-5 text-slate-500" />}
-              title="Votes Totaux"
-              value={totalVotes}
-            />
-            <StatCard
-              icon={<span className="text-2xl">{dominantMood.emoji}</span>}
-              title="Humeur Dominante"
-              value={dominantMood.name}
-              onMouseEnter={() => setSilkColor(dominantMood.fill)}
-              onMouseLeave={() => setSilkColor(darkThemeColor)}
-            />
-            <StatCard
-              icon={<TrendingUp className="h-5 w-5 text-slate-500" />}
-              title="Taux de Participation"
-              value="85%"
-            />
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+                <StatCard
+                  icon={<Users className="h-5 w-5 text-slate-500" />}
+                  title="Votes Totaux"
+                  value={results.totalVotes}
+                />
+                <StatCard
+                  icon={
+                    <span className="text-2xl">
+                      {results.dominantMoodEmoji}
+                    </span>
+                  }
+                  title="Humeur Dominante"
+                  value={results.dominantMood}
+                  onMouseEnter={() => {
+                    const dominantMoodData = results.moodDistribution.find(
+                      (m) => m.name === results.dominantMood,
+                    );
+                    if (dominantMoodData) setSilkColor(dominantMoodData.fill);
+                  }}
+                  onMouseLeave={() => setSilkColor(darkThemeColor)}
+                />
+                <StatCard
+                  icon={<TrendingUp className="h-5 w-5 text-slate-500" />}
+                  title="Taux de Participation"
+                  value={results.participationRate}
+                />
+              </div>
+            </>
+          )}
         </main>
       </motion.div>
     </div>
