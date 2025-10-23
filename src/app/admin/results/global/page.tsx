@@ -239,6 +239,42 @@ export default function GlobalResultsPage() {
   }, [selectedCampaignId]);
 
   React.useEffect(() => {
+    async function fetchManagerOptions() {
+      if (selectedCampaignId === "all") {
+        try {
+          const response = await fetch("/api/managers");
+          if (!response.ok) {
+            throw new Error("Failed to fetch managers");
+          }
+          const data = await response.json();
+          setManagerOptions(data);
+          setSelectedManager("all");
+        } catch (error: any) {
+          toast.error("Impossible de charger les options de managers.");
+        }
+      } else if (selectedCampaignId) {
+        try {
+          const response = await fetch(
+            `/api/campaigns/${selectedCampaignId}/managers`,
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch managers");
+          }
+          const data = await response.json();
+          setManagerOptions(data);
+          setSelectedManager("all");
+        } catch (error: any) {
+          toast.error("Impossible de charger les options de managers.");
+        }
+      } else {
+        setManagerOptions([]);
+        setSelectedManager("all");
+      }
+    }
+    fetchManagerOptions();
+  }, [selectedCampaignId]);
+
+  React.useEffect(() => {
     async function fetchResults() {
       setIsLoadingResults(true);
       let url: string;
@@ -246,6 +282,9 @@ export default function GlobalResultsPage() {
 
       if (selectedCampaignId === "all") {
         url = `/api/results/global`;
+        if (selectedManager && selectedManager !== "all") {
+          params.append("managerName", selectedManager);
+        }
       } else {
         url = `/api/campaigns/${selectedCampaignId}/results`;
         if (selectedManager && selectedManager !== "all") {
@@ -368,10 +407,7 @@ export default function GlobalResultsPage() {
                   <Select
                     value={selectedManager.toString()}
                     onValueChange={(value) => setSelectedManager(value)}
-                    disabled={
-                      selectedCampaignId === "all" ||
-                      managerOptions.length === 0
-                    }
+                    disabled={managerOptions.length === 0}
                   >
                     <SelectTrigger className="w-[280px] h-11 bg-slate-800 border-slate-700 text-white">
                       <SelectValue placeholder="Tous les managers" />
