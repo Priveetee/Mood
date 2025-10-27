@@ -1,4 +1,3 @@
--- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
@@ -10,78 +9,71 @@ CREATE TABLE "User" (
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "Campaign" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "createdBy" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "archived" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Campaign_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "PollLink" (
     "id" TEXT NOT NULL,
     "campaignId" INTEGER NOT NULL,
     "token" TEXT NOT NULL,
+    "managerName" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "PollLink_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "Vote" (
     "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "userId" INTEGER,
     "pollLinkId" TEXT NOT NULL,
     "campaignId" INTEGER NOT NULL,
     "mood" TEXT NOT NULL,
     "comment" TEXT,
+    "ipAddress" TEXT NOT NULL,
+    "userAgent" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Vote_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
+CREATE TABLE "VoteAttempt" (
+    "id" SERIAL NOT NULL,
+    "pollLinkId" TEXT NOT NULL,
+    "ipAddress" TEXT NOT NULL,
+    "userAgent" TEXT NOT NULL,
+    "success" BOOLEAN NOT NULL,
+    "reason" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "VoteAttempt_pkey" PRIMARY KEY ("id")
+);
+
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-
--- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
-
--- CreateIndex
 CREATE INDEX "Campaign_createdBy_idx" ON "Campaign"("createdBy");
-
--- CreateIndex
 CREATE UNIQUE INDEX "PollLink_token_key" ON "PollLink"("token");
-
--- CreateIndex
 CREATE INDEX "PollLink_campaignId_idx" ON "PollLink"("campaignId");
-
--- CreateIndex
-CREATE INDEX "Vote_userId_idx" ON "Vote"("userId");
-
--- CreateIndex
-CREATE INDEX "Vote_pollLinkId_idx" ON "Vote"("pollLinkId");
-
--- CreateIndex
-CREATE INDEX "Vote_campaignId_idx" ON "Vote"("campaignId");
-
--- CreateIndex
+CREATE UNIQUE INDEX "Vote_pollLinkId_ipAddress_key" ON "Vote"("pollLinkId", "ipAddress");
 CREATE UNIQUE INDEX "Vote_userId_pollLinkId_key" ON "Vote"("userId", "pollLinkId");
+CREATE INDEX "Vote_userId_idx" ON "Vote"("userId");
+CREATE INDEX "Vote_pollLinkId_idx" ON "Vote"("pollLinkId");
+CREATE INDEX "Vote_campaignId_idx" ON "Vote"("campaignId");
+CREATE INDEX "Vote_ipAddress_idx" ON "Vote"("ipAddress");
+CREATE INDEX "Vote_userAgent_idx" ON "Vote"("userAgent");
+CREATE INDEX "VoteAttempt_pollLinkId_idx" ON "VoteAttempt"("pollLinkId");
+CREATE INDEX "VoteAttempt_ipAddress_idx" ON "VoteAttempt"("ipAddress");
 
--- AddForeignKey
 ALTER TABLE "Campaign" ADD CONSTRAINT "Campaign_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "PollLink" ADD CONSTRAINT "PollLink_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "Campaign"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Vote" ADD CONSTRAINT "Vote_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Vote" ADD CONSTRAINT "Vote_pollLinkId_fkey" FOREIGN KEY ("pollLinkId") REFERENCES "PollLink"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Vote" ADD CONSTRAINT "Vote_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "Campaign"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "VoteAttempt" ADD CONSTRAINT "VoteAttempt_pollLinkId_fkey" FOREIGN KEY ("pollLinkId") REFERENCES "PollLink"("id") ON DELETE CASCADE ON UPDATE CASCADE;
