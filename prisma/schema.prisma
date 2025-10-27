@@ -16,7 +16,6 @@ model User {
   updatedAt DateTime @updatedAt
 
   campaigns Campaign[]
-  votes     Vote[]     @relation("UserVotes")
 }
 
 model Campaign {
@@ -44,16 +43,13 @@ model PollLink {
 
   createdAt DateTime @default(now())
 
-  votes        Vote[]
-  voteAttempts VoteAttempt[]
+  votes Vote[]
 
   @@index([campaignId])
 }
 
 model Vote {
   id         Int      @id @default(autoincrement())
-  userId     Int?
-  user       User?    @relation("UserVotes", fields: [userId], references: [id], onDelete: Cascade)
   pollLinkId String
   pollLink   PollLink @relation(fields: [pollLinkId], references: [id], onDelete: Cascade)
   campaignId Int
@@ -62,32 +58,8 @@ model Vote {
   mood    String
   comment String?
 
-  ipAddress String
-  userAgent String
-
   createdAt DateTime @default(now())
 
-  @@unique([pollLinkId, ipAddress])
-  @@unique([userId, pollLinkId])
-  @@index([userId])
   @@index([pollLinkId])
   @@index([campaignId])
-  @@index([ipAddress])
-  @@index([userAgent])
-}
-
-model VoteAttempt {
-  id         Int      @id @default(autoincrement())
-  pollLinkId String
-  pollLink   PollLink @relation(fields: [pollLinkId], references: [id], onDelete: Cascade)
-
-  ipAddress String
-  userAgent String
-  success   Boolean
-  reason    String?
-
-  createdAt DateTime @default(now())
-
-  @@index([pollLinkId])
-  @@index([ipAddress])
 }
