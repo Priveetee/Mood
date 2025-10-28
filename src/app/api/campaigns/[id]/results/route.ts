@@ -112,7 +112,7 @@ export async function GET(
 
       if (vote.comment) {
         comments.push({
-          user: vote.ipAddress,
+          user: "Anonyme",
           manager: vote.pollLink.managerName,
           comment: vote.comment,
           mood: vote.mood,
