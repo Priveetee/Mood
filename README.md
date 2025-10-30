@@ -83,3 +83,9 @@ git pull origin main
 # Rebuild the application image and restart the services
 docker compose up --build -d
 ```
+## Acknowledgements
+
+This application was built using fantastic open-source tools and resources. Special thanks to:
+
+-   [**shadcn/ui**](https://ui.shadcn.com/): For the component library that forms the basis of the user interface.
+-   [**ReactBitsDev**](https://reactbits.dev/): For providing excellent UI patterns and inspiration.
