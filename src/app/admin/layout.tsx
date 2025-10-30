@@ -1,12 +1,9 @@
 "use client";
 
-import { ThemeProvider, useTheme } from "./theme-context";
+import { useTheme } from "./theme-context";
 import Silk from "@/components/Silk";
 import { Switch } from "@/components/ui/switch";
 import { Sun, Moon } from "lucide-react";
-
-const lightThemeColor = "#64748b";
-const darkThemeColor = "#3f3f5a";
 
 function AdminBackground() {
   const { silkColor } = useTheme();
@@ -24,12 +21,7 @@ function AdminBackground() {
 }
 
 function ThemeSwitcher() {
-  const { isDarkTheme, setIsDarkTheme, setSilkColor } = useTheme();
-  
-  const handleThemeChange = (isLight: boolean) => {
-    setIsDarkTheme(!isLight);
-    setSilkColor(isLight ? lightThemeColor : darkThemeColor);
-  };
+  const { isDarkTheme, setIsDarkTheme } = useTheme();
 
   return (
     <div className="absolute top-8 right-8 flex items-center space-x-3">
@@ -37,7 +29,7 @@ function ThemeSwitcher() {
       <Switch
         id="theme-switch"
         checked={!isDarkTheme}
-        onCheckedChange={handleThemeChange}
+        onCheckedChange={(isChecked) => setIsDarkTheme(!isChecked)}
       />
       <Sun className="h-6 w-6 text-slate-400" />
     </div>
@@ -50,10 +42,10 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider>
+    <>
       <AdminBackground />
       <ThemeSwitcher />
       <div className="min-h-screen text-white">{children}</div>
-    </ThemeProvider>
+    </>
   );
 }
