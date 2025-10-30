@@ -15,12 +15,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
 
-    let userId: number;
+    let userId: number | undefined;
     try {
       const { payload } = await jwtVerify(token, JWT_SECRET_KEY);
-      userId = payload.userId as number;
+      if (typeof payload.userId === "number") {
+        userId = payload.userId;
+      }
     } catch (error) {
       return NextResponse.json({ error: "Token invalide" }, { status: 401 });
+    }
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "ID utilisateur non trouvé dans le token" },
+        { status: 401 },
+      );
     }
 
     const { name, managers } = await req.json();
@@ -64,6 +73,15 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error) {
+    if ((error as any).code === "P2003") {
+      return NextResponse.json(
+        {
+          error:
+            "Erreur de clé étrangère : l'utilisateur spécifié n'existe pas.",
+        },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
       { error: "Erreur serveur lors de la création de la campagne" },
       { status: 500 },
@@ -103,24 +121,35 @@ export async function GET(req: Request) {
       },
     });
 
-    const formattedCampaigns = campaigns.map((campaign) => {
-      const totalPollLinks = campaign._count.pollLinks;
-      const totalVotes = campaign._count.votes;
-      const progress =
-        totalPollLinks > 0
-          ? Math.round((totalVotes / totalPollLinks) * 100)
-          : 0;
+    const formattedCampaigns = await Promise.all(
+      campaigns.map(async (campaign) => {
+        const totalPollLinks = campaign._count.pollLinks;
+        const totalVotes = campaign._count.votes;
 
-      return {
-        id: campaign.id,
-        name: campaign.name,
-        managerCount: totalPollLinks,
-        creationDate: campaign.createdAt.toLocaleDateString("fr-FR"),
-        progress,
-        totalVotes,
-        archived: campaign.archived || false,
-      };
-    });
+        const votedManagers = await prisma.vote.groupBy({
+          by: ["pollLinkId"],
+          where: {
+            campaignId: campaign.id,
+          },
+        });
+        const votedManagersCount = votedManagers.length;
+
+        const participationRate =
+          totalPollLinks > 0
+            ? Math.round((votedManagersCount / totalPollLinks) * 100)
+            : 0;
+
+        return {
+          id: campaign.id,
+          name: campaign.name,
+          managerCount: totalPollLinks,
+          creationDate: campaign.createdAt.toLocaleDateString("fr-FR"),
+          participationRate,
+          totalVotes,
+          archived: campaign.archived || false,
+        };
+      }),
+    );
 
     return NextResponse.json(formattedCampaigns, { status: 200 });
   } catch (error) {

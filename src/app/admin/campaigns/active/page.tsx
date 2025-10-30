@@ -16,6 +16,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -27,11 +33,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ArrowLeft,
   ArrowRight,
-  Link as LinkIcon,
   Copy,
   Plus,
+  Edit,
   Archive,
   ArchiveRestore,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,7 +47,7 @@ interface Campaign {
   name: string;
   managerCount: number;
   creationDate: string;
-  progress: number;
+  participationRate: number;
   totalVotes: number;
   archived?: boolean;
 }
@@ -70,6 +77,7 @@ export default function ActiveCampaignsPage() {
   }, []);
 
   async function fetchCampaigns() {
+    setIsLoading(true);
     try {
       const response = await fetch("/api/campaigns");
       const data = await response.json();
@@ -108,25 +116,13 @@ export default function ActiveCampaignsPage() {
   function openLinksDialog(campaign: Campaign) {
     setSelectedCampaignId(campaign.id);
     setSelectedCampaignName(campaign.name);
-    setIsLinksDialogOpen(true);
     fetchCampaignLinks(campaign.id);
-  }
-
-  function closeLinksDialog() {
-    setIsLinksDialogOpen(false);
-    setSelectedCampaignId(null);
-    setSelectedCampaignName("");
-    setCampaignLinks([]);
+    setIsLinksDialogOpen(true);
   }
 
   function openAddManagerDialog() {
     setNewManagerName("");
     setIsAddManagerOpen(true);
-  }
-
-  function closeAddManagerDialog() {
-    setIsAddManagerOpen(false);
-    setNewManagerName("");
   }
 
   async function handleAddManager() {
@@ -142,15 +138,10 @@ export default function ActiveCampaignsPage() {
           body: JSON.stringify({ managerName: newManagerName.trim() }),
         },
       );
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de l'ajout du manager.");
-      }
-
-      toast.success(`Manager "${newManagerName}" ajouté avec succès !`);
-      closeAddManagerDialog();
+      if (!response.ok) throw new Error(data.error);
+      toast.success(`Manager "${newManagerName}" ajouté !`);
+      setIsAddManagerOpen(false);
       await fetchCampaigns();
       await fetchCampaignLinks(selectedCampaignId);
     } catch (error: any) {
@@ -167,11 +158,7 @@ export default function ActiveCampaignsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ archived: archive }),
       });
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'archivage.");
-      }
-
+      if (!response.ok) throw new Error("Erreur lors de l'archivage.");
       toast.success(archive ? "Campagne archivée" : "Campagne restaurée");
       await fetchCampaigns();
     } catch (error: any) {
@@ -213,12 +200,13 @@ export default function ActiveCampaignsPage() {
       >
         <header className="mb-10 max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-white">Campagnes Actives</h1>
+            <h1 className="text-4xl font-bold text-white">
+              Gestion des Campagnes
+            </h1>
             <p className="text-slate-400 mt-2">
-              Suivez la progression des sondages actuellement en cours.
+              Suivez et gérez vos campagnes de sondage.
             </p>
           </div>
-
           <div className="flex items-center gap-3">
             <Label htmlFor="archived-switch" className="text-slate-300">
               Afficher les archivées
@@ -239,12 +227,12 @@ export default function ActiveCampaignsPage() {
                   "Aucune campagne archivée."
                 ) : (
                   <>
-                    Aucune campagne active pour le moment.
+                    Aucune campagne active.{" "}
                     <Link
                       href="/admin/campaigns/new"
-                      className="text-white hover:underline ml-2"
+                      className="text-white hover:underline font-semibold"
                     >
-                      Créer une nouvelle campagne.
+                      Créez-en une !
                     </Link>
                   </>
                 )}
@@ -253,20 +241,16 @@ export default function ActiveCampaignsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-slate-800 hover:bg-transparent">
-                    <TableHead className="text-white">
-                      Nom de la campagne
+                    <TableHead className="text-white">Nom</TableHead>
+                    <TableHead className="text-white text-center">
+                      Liens
                     </TableHead>
                     <TableHead className="text-white text-center">
-                      Liens générés
+                      Votes
                     </TableHead>
-                    <TableHead className="text-white text-center">
-                      Votes reçus
-                    </TableHead>
-                    <TableHead className="text-white">
-                      Date de Création
-                    </TableHead>
+                    <TableHead className="text-white">Date</TableHead>
                     <TableHead className="text-white w-[200px]">
-                      Progression
+                      Participation
                     </TableHead>
                     <TableHead className="text-right text-white">
                       Actions
@@ -294,48 +278,61 @@ export default function ActiveCampaignsPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Progress
-                            value={campaign.progress}
+                            value={campaign.participationRate}
                             className="bg-slate-700 h-2"
                           />
                           <span className="text-sm text-slate-400">
-                            {campaign.progress}%
+                            {campaign.participationRate}%
                           </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openLinksDialog(campaign)}
-                            title="Voir les liens"
-                          >
-                            <LinkIcon className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              handleArchive(campaign.id, !showArchived)
-                            }
-                            title={showArchived ? "Restaurer" : "Archiver"}
-                          >
-                            {showArchived ? (
-                              <ArchiveRestore className="h-4 w-4" />
-                            ) : (
-                              <Archive className="h-4 w-4" />
-                            )}
-                          </Button>
-
-                          <Link
-                            href={`/admin/results/global?campaignId=${campaign.id}`}
-                          >
-                            <Button variant="ghost" size="sm" className="gap-2">
-                              Résultats <ArrowRight className="h-4 w-4" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-8 gap-2 text-xs text-slate-200 hover:bg-slate-800 hover:text-white"
+                            >
+                              <span>Actions</span>
+                              <ChevronDown className="h-4 w-4" />
                             </Button>
-                          </Link>
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-slate-900 border-slate-800 text-slate-200"
+                          >
+                            <DropdownMenuItem
+                              onClick={() => openLinksDialog(campaign)}
+                              className="cursor-pointer"
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Gérer les liens
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleArchive(campaign.id, !showArchived)
+                              }
+                              className="cursor-pointer"
+                            >
+                              {showArchived ? (
+                                <ArchiveRestore className="mr-2 h-4 w-4" />
+                              ) : (
+                                <Archive className="mr-2 h-4 w-4" />
+                              )}
+                              <span>
+                                {showArchived ? "Restaurer" : "Archiver"}
+                              </span>
+                            </DropdownMenuItem>
+                            <Link
+                              href={`/admin/results/global?campaignId=${campaign.id}`}
+                            >
+                              <DropdownMenuItem className="cursor-pointer">
+                                <ArrowRight className="mr-2 h-4 w-4" />
+                                Voir les résultats
+                              </DropdownMenuItem>
+                            </Link>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -350,7 +347,7 @@ export default function ActiveCampaignsPage() {
         <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">
-              Liens de la campagne: {selectedCampaignName}
+              Gérer les liens: {selectedCampaignName}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
               {campaignLinks.length} lien(s) généré(s)
@@ -395,10 +392,10 @@ export default function ActiveCampaignsPage() {
         <DialogContent className="bg-slate-900 border-slate-800 text-white">
           <DialogHeader>
             <DialogTitle className="text-white">
-              Ajouter un nouveau manager
+              Ajouter un manager à {selectedCampaignName}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Un nouveau lien sera généré pour ce manager.
+              Un nouveau lien sera généré.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -407,21 +404,9 @@ export default function ActiveCampaignsPage() {
               onChange={(e) => setNewManagerName(e.target.value)}
               placeholder="Nom du manager"
               className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddManager();
-                }
-              }}
+              onKeyDown={(e) => e.key === "Enter" && handleAddManager()}
             />
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={closeAddManagerDialog}
-                className="border-slate-700 text-slate-300 hover:bg-slate-800"
-              >
-                Annuler
-              </Button>
+            <div className="flex justify-end">
               <Button
                 onClick={handleAddManager}
                 disabled={!newManagerName.trim() || isAddingManager}
