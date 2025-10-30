@@ -19,13 +19,14 @@ model User {
 }
 
 model Campaign {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   name      String
   createdBy Int
-  creator   User     @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  archived  Boolean  @default(false)
+  creator   User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  archived  Boolean   @default(false)
+  expiresAt DateTime?
 
   pollLinks PollLink[]
   votes     Vote[]     @relation("CampaignVotes")

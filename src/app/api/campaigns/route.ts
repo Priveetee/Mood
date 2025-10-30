@@ -10,7 +10,6 @@ export async function POST(req: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("auth_token")?.value;
-
     if (!token) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
@@ -32,7 +31,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, managers } = await req.json();
+    const { name, managers, expiresAt } = await req.json();
 
     if (!name || !Array.isArray(managers) || managers.length === 0) {
       return NextResponse.json(
@@ -46,6 +45,7 @@ export async function POST(req: Request) {
         name,
         createdBy: userId,
         archived: false,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
       },
     });
 
@@ -55,8 +55,12 @@ export async function POST(req: Request) {
       managerName,
     }));
 
-    const pollLinks = await prisma.pollLink.createManyAndReturn({
+    await prisma.pollLink.createMany({
       data: pollLinksData,
+    });
+
+    const pollLinks = await prisma.pollLink.findMany({
+      where: { campaignId: campaign.id },
     });
 
     const generatedLinks = pollLinks.map((link) => ({
@@ -93,7 +97,6 @@ export async function GET(req: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("auth_token")?.value;
-
     if (!token) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
     }
@@ -105,6 +108,19 @@ export async function GET(req: Request) {
     } catch (error) {
       return NextResponse.json({ error: "Token invalide" }, { status: 401 });
     }
+
+    await prisma.campaign.updateMany({
+      where: {
+        createdBy: userId,
+        archived: false,
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+      data: {
+        archived: true,
+      },
+    });
 
     const campaigns = await prisma.campaign.findMany({
       where: { createdBy: userId },
@@ -128,9 +144,7 @@ export async function GET(req: Request) {
 
         const votedManagers = await prisma.vote.groupBy({
           by: ["pollLinkId"],
-          where: {
-            campaignId: campaign.id,
-          },
+          where: { campaignId: campaign.id },
         });
         const votedManagersCount = votedManagers.length;
 

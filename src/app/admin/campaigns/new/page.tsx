@@ -2,14 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, X, Copy, Send, Edit } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  X,
+  Copy,
+  Send,
+  Edit,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -35,6 +52,7 @@ export default function NewCampaignPage() {
   const [campaignName, setCampaignName] = useState("");
   const [currentManager, setCurrentManager] = useState("");
   const [managers, setManagers] = useState<string[]>([]);
+  const [expiresAt, setExpiresAt] = useState<Date | undefined>();
   const [generatedLinks, setGeneratedLinks] = useState<GeneratedLink[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -62,6 +80,7 @@ export default function NewCampaignPage() {
         body: JSON.stringify({
           name: campaignName,
           managers: managers,
+          expiresAt: expiresAt,
         }),
       });
 
@@ -85,7 +104,7 @@ export default function NewCampaignPage() {
 
   const copyToClipboard = (text: string, message: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      toast.info(message);
+      toast.success(message);
     });
   };
 
@@ -93,7 +112,7 @@ export default function NewCampaignPage() {
     const allLinks = generatedLinks
       .map((link) => `${link.managerName}: ${link.url}`)
       .join("\n");
-    copyToClipboard(allLinks, "Tous les liens ont été copiés.");
+    copyToClipboard(allLinks, "Tous les liens ont été copiés !");
   };
 
   const handleSendEmail = () => {
@@ -105,6 +124,7 @@ export default function NewCampaignPage() {
     window.location.href = `mailto:?subject=${encodeURIComponent(
       subject,
     )}&body=${encodeURIComponent(body)}`;
+    toast.info("Ouverture de votre client de messagerie...");
   };
 
   return (
@@ -151,14 +171,14 @@ export default function NewCampaignPage() {
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      className="gap-2 bg-slate-200 text-slate-900 hover:bg-slate-300"
+                      className="gap-2 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
                       onClick={handleCopyAll}
                     >
                       <Copy className="h-4 w-4" /> Copier tout
                     </Button>
                     <Button
                       variant="outline"
-                      className="gap-2 bg-slate-200 text-slate-900 hover:bg-slate-300"
+                      className="gap-2 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
                       onClick={handleSendEmail}
                     >
                       <Send className="h-4 w-4" /> Envoyer par email
@@ -186,7 +206,7 @@ export default function NewCampaignPage() {
                               onClick={() =>
                                 copyToClipboard(
                                   `${link.managerName}: ${link.url}`,
-                                  "Lien copié !",
+                                  "Lien du manager copié !",
                                 )
                               }
                             >
@@ -244,6 +264,54 @@ export default function NewCampaignPage() {
                       <Plus className="h-5 w-5" />
                     </Button>
                   </div>
+
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-12 text-lg",
+                          !expiresAt && "text-slate-400",
+                          "bg-slate-800 border-slate-700 text-white hover:bg-slate-700 hover:text-white",
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {expiresAt ? (
+                          format(expiresAt, "PPP", { locale: fr })
+                        ) : (
+                          <span>Date d'expiration (optionnel)</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-slate-900 border-slate-800 text-white">
+                      <Calendar
+                        mode="single"
+                        selected={expiresAt}
+                        onSelect={setExpiresAt}
+                        initialFocus
+                        locale={fr}
+                        disabled={(date) => date < new Date()}
+                        classNames={{
+                          months:
+                            "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                          month: "space-y-4",
+                          caption_label: "text-sm font-medium text-slate-100",
+                          nav_button:
+                            "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-slate-700 rounded-md hover:bg-slate-800",
+                          head_cell:
+                            "text-slate-400 rounded-md w-9 font-normal text-[0.8rem]",
+                          cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-slate-800/50 [&:has([aria-selected])]:bg-slate-800 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                          day: "h-9 w-9 p-0 font-normal rounded-md hover:bg-slate-800 text-slate-300",
+                          day_selected:
+                            "bg-slate-200 text-slate-900 hover:bg-slate-200 focus:bg-slate-200",
+                          day_today: "bg-slate-700 text-slate-100",
+                          day_outside: "text-slate-500 opacity-50",
+                          day_disabled: "text-slate-600 opacity-50",
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+
                   {managers.length > 0 && (
                     <ScrollArea className="h-48 w-full">
                       <div className="flex flex-wrap gap-3 p-1">

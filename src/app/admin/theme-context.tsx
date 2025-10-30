@@ -5,6 +5,7 @@ import {
   ThemeProvider as NextThemesProvider,
   useTheme as useNextTheme,
 } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 
 const lightThemeColor = "#64748b";
 const darkThemeColor = "#3f3f5a";
@@ -47,6 +48,7 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
       value={{ isDarkTheme, setIsDarkTheme, silkColor, setSilkColor }}
     >
       {children}
+      <Toaster richColors theme={isDarkTheme ? "dark" : "light"} />
     </CustomThemeContext.Provider>
   );
 }
