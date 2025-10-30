@@ -108,7 +108,10 @@ export default function PollPage() {
       toast.success(
         "Votre vote a bien été envoyé. Merci de votre participation !",
       );
-      router.push("/poll/closed?voted=true");
+
+      setSelectedMood(null);
+      setComment("");
+      setSilkColor(DEFAULT_SILK_COLOR);
     } catch (error: any) {
       toast.error(error.message || "Échec de l'enregistrement du vote.");
     } finally {
