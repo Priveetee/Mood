@@ -67,7 +67,8 @@ export default function LoginForm() {
         body: JSON.stringify(data),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Erreur d'enregistrement");
+      if (!response.ok)
+        throw new Error(result.error || "Erreur d'enregistrement");
       toast.success("Compte créé avec succès ! Redirection...");
       router.push("/admin");
     } catch (error: any) {
@@ -102,42 +103,98 @@ export default function LoginForm() {
         className="w-full max-w-md relative z-10"
       >
         <Card className="p-8 bg-slate-900 border border-slate-800 shadow-2xl shadow-black/20">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FormType)}>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as FormType)}
+          >
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-slate-800 border-slate-700">
-              <TabsTrigger value="login" className="data-[state=active]:bg-slate-700">
+              <TabsTrigger
+                value="login"
+                className="data-[state=active]:bg-slate-700 text-white"
+              >
                 Sign In
               </TabsTrigger>
               {canRegister && (
-                <TabsTrigger value="register" className="data-[state=active]:bg-slate-700">
+                <TabsTrigger
+                  value="register"
+                  className="data-[state=active]:bg-slate-700 text-white"
+                >
                   Sign Up
                 </TabsTrigger>
               )}
             </TabsList>
 
             <TabsContent value="login" className="mt-0">
-              <motion.div key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                <form onSubmit={handleLoginSubmit(onLogin)} className="space-y-6">
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <form
+                  onSubmit={handleLoginSubmit(onLogin)}
+                  className="space-y-6"
+                >
                   <div className="space-y-2">
-                    <Label htmlFor="login-email" className="text-slate-300">Email</Label>
+                    <Label htmlFor="login-email" className="text-slate-300">
+                      Email
+                    </Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3.5 h-5 w-5 text-slate-500" />
-                      <Input id="login-email" type="email" {...registerLogin("email")} className="pl-11 h-12 bg-slate-800" />
+                      <Input
+                        id="login-email"
+                        type="email"
+                        {...registerLogin("email")}
+                        className="pl-11 h-12 bg-slate-800 text-white placeholder:text-slate-400"
+                      />
                     </div>
-                    {loginErrors.email && <p className="text-sm text-red-500 pt-1">{loginErrors.email.message}</p>}
+                    {loginErrors.email && (
+                      <p className="text-sm text-red-500 pt-1">
+                        {loginErrors.email.message}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password" className="text-slate-300">Password</Label>
+                    <Label htmlFor="login-password" className="text-slate-300">
+                      Password
+                    </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3.5 h-5 w-5 text-slate-500" />
-                      <Input id="login-password" type={showPassword ? "text" : "password"} {...registerLogin("password")} className="pl-11 pr-12 h-12 bg-slate-800" />
-                      <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1.5" onClick={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      <Input
+                        id="login-password"
+                        type={showPassword ? "text" : "password"}
+                        {...registerLogin("password")}
+                        className="pl-11 pr-12 h-12 bg-slate-800 text-white placeholder:text-slate-400"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1.5"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
-                    {loginErrors.password && <p className="text-sm text-red-500 pt-1">{loginErrors.password.message}</p>}
+                    {loginErrors.password && (
+                      <p className="text-sm text-red-500 pt-1">
+                        {loginErrors.password.message}
+                      </p>
+                    )}
                   </div>
-                  <Button type="submit" className="w-full h-12" disabled={isLoading}>
-                    {isLoading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" /> : "Sign In"}
+                  <Button
+                    type="submit"
+                    className="w-full h-12"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                    ) : (
+                      "Sign In"
+                    )}
                   </Button>
                 </form>
               </motion.div>
@@ -145,37 +202,116 @@ export default function LoginForm() {
 
             {canRegister && (
               <TabsContent value="register" className="mt-0">
-                <motion.div key="register" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                  <form onSubmit={handleRegisterSubmit(onRegister)} className="space-y-4">
+                <motion.div
+                  key="register"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                >
+                  <form
+                    onSubmit={handleRegisterSubmit(onRegister)}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
-                      <Label htmlFor="register-email" className="text-slate-300">Email</Label>
-                      <Input id="register-email" type="email" {...registerRegister("email")} className="h-12 bg-slate-800" />
-                      {registerErrors.email && <p className="text-sm text-red-500 pt-1">{registerErrors.email.message}</p>}
+                      <Label
+                        htmlFor="register-email"
+                        className="text-slate-300"
+                      >
+                        Email
+                      </Label>
+                      <Input
+                        id="register-email"
+                        type="email"
+                        {...registerRegister("email")}
+                        className="h-12 bg-slate-800 text-white placeholder:text-slate-400"
+                      />
+                      {registerErrors.email && (
+                        <p className="text-sm text-red-500 pt-1">
+                          {registerErrors.email.message}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="username-register" className="text-slate-300">Username</Label>
-                      <Input id="username-register" {...registerRegister("username")} className="h-12 bg-slate-800" />
-                      {registerErrors.username && <p className="text-sm text-red-500 pt-1">{registerErrors.username.message}</p>}
+                      <Label
+                        htmlFor="username-register"
+                        className="text-slate-300"
+                      >
+                        Username
+                      </Label>
+                      <Input
+                        id="username-register"
+                        {...registerRegister("username")}
+                        className="h-12 bg-slate-800 text-white placeholder:text-slate-400"
+                      />
+                      {registerErrors.username && (
+                        <p className="text-sm text-red-500 pt-1">
+                          {registerErrors.username.message}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="password-register" className="text-slate-300">Password</Label>
-                      <Input id="password-register" type="password" {...registerRegister("password")} className="h-12 bg-slate-800" />
-                      {registerErrors.password && <p className="text-sm text-red-500 pt-1">{registerErrors.password.message}</p>}
+                      <Label
+                        htmlFor="password-register"
+                        className="text-slate-300"
+                      >
+                        Password
+                      </Label>
+                      <Input
+                        id="password-register"
+                        type="password"
+                        {...registerRegister("password")}
+                        className="h-12 bg-slate-800 text-white placeholder:text-slate-400"
+                      />
+                      {registerErrors.password && (
+                        <p className="text-sm text-red-500 pt-1">
+                          {registerErrors.password.message}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirm-password-register" className="text-slate-300">Confirm Password</Label>
-                      <Input id="confirm-password-register" type="password" {...registerRegister("confirmPassword")} className="h-12 bg-slate-800" />
-                      {registerErrors.confirmPassword && <p className="text-sm text-red-500 pt-1">{registerErrors.confirmPassword.message}</p>}
+                      <Label
+                        htmlFor="confirm-password-register"
+                        className="text-slate-300"
+                      >
+                        Confirm Password
+                      </Label>
+                      <Input
+                        id="confirm-password-register"
+                        type="password"
+                        {...registerRegister("confirmPassword")}
+                        className="h-12 bg-slate-800 text-white placeholder:text-slate-400"
+                      />
+                      {registerErrors.confirmPassword && (
+                        <p className="text-sm text-red-500 pt-1">
+                          {registerErrors.confirmPassword.message}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="invitation-key" className="text-slate-300">Clé d'invitation</Label>
+                      <Label
+                        htmlFor="invitation-key"
+                        className="text-slate-300"
+                      >
+                        Clé d'invitation
+                      </Label>
                       <div className="relative">
                         <KeyRound className="absolute left-3 top-3.5 h-5 w-5 text-slate-500" />
-                        <Input id="invitation-key" {...registerRegister("invitationKey")} className="pl-11 h-12 bg-slate-800" />
+                        <Input
+                          id="invitation-key"
+                          {...registerRegister("invitationKey")}
+                          className="pl-11 h-12 bg-slate-800 text-white placeholder:text-slate-400"
+                        />
                       </div>
                     </div>
-                    <Button type="submit" className="w-full h-12" disabled={isLoading}>
-                      {isLoading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" /> : "Créer un compte"}
+                    <Button
+                      type="submit"
+                      className="w-full h-12"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                      ) : (
+                        "Créer un compte"
+                      )}
                     </Button>
                   </form>
                 </motion.div>

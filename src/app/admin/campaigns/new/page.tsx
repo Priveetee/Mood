@@ -102,29 +102,32 @@ export default function NewCampaignPage() {
       .join("\n");
     const subject = `Liens pour la campagne de sondage: ${campaignName}`;
     const body = `Bonjour,\n\nVoici les liens de sondage pour vos équipes respectives :\n\n${allLinks}\n\nCordialement.`;
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
   };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="w-full max-w-3xl">
-        {isGenerated ? (
-          <button
-            onClick={() => setIsGenerated(false)}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8"
-          >
-            <Edit className="h-4 w-4" />
-            Modifier la campagne
-          </button>
-        ) : (
+        <div className="flex items-center justify-between mb-8">
           <Link
             href="/admin"
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8"
+            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Retour au Dashboard
           </Link>
-        )}
+          {isGenerated && (
+            <button
+              onClick={() => setIsGenerated(false)}
+              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+            >
+              <Edit className="h-4 w-4" />
+              Modifier la campagne
+            </button>
+          )}
+        </div>
 
         <AnimatePresence mode="wait">
           {isGenerated ? (
@@ -216,7 +219,7 @@ export default function NewCampaignPage() {
                     value={campaignName}
                     onChange={(e) => setCampaignName(e.target.value)}
                     placeholder="Nom de la campagne"
-                    className="h-12 bg-slate-800 border-slate-700 text-lg"
+                    className="h-12 bg-slate-800 border-slate-700 text-lg text-white placeholder:text-slate-400"
                   />
                   <div className="flex gap-2">
                     <Input
@@ -229,7 +232,7 @@ export default function NewCampaignPage() {
                         }
                       }}
                       placeholder="Ajouter un manager"
-                      className="h-12 bg-slate-800 border-slate-700 text-lg"
+                      className="h-12 bg-slate-800 border-slate-700 text-lg text-white placeholder:text-slate-400"
                     />
                     <Button
                       type="button"
