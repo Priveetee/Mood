@@ -7,4 +7,19 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          const userCount = await prisma.user.count();
+          if (userCount > 0) {
+            throw new Error(
+              "L'inscription est fermée. Un utilisateur existe déjà.",
+            );
+          }
+          return { data: user };
+        },
+      },
+    },
+  },
 });

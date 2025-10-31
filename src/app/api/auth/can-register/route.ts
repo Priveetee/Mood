@@ -4,15 +4,8 @@ import prisma from "@/lib/prisma";
 export async function GET() {
   try {
     const userCount = await prisma.user.count();
-
-    return NextResponse.json({
-      canRegister: userCount === 0,
-    });
+    return NextResponse.json({ canRegister: userCount === 0 });
   } catch (error) {
-    console.error("Erreur dans can-register API:", error);
-    return NextResponse.json(
-      { error: "Erreur serveur lors de la vérification des utilisateurs." },
-      { status: 500 },
-    );
+    return NextResponse.json({ canRegister: false }, { status: 500 });
   }
 }
