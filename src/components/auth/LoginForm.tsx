@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
@@ -67,9 +68,22 @@ export default function LoginForm() {
         body: JSON.stringify(data),
       });
       const result = await response.json();
-      if (!response.ok)
+      if (!response.ok) {
         throw new Error(result.error || "Erreur d'enregistrement");
-      toast.success("Compte créé avec succès ! Redirection...");
+      }
+
+      toast.success("Compte créé ! Connexion en cours...");
+
+      const loginResult = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+
+      if (loginResult?.error) {
+        throw new Error(loginResult.error);
+      }
+
       router.push("/admin");
     } catch (error: any) {
       toast.error(error.message || "Échec de l'enregistrement.");
@@ -78,13 +92,16 @@ export default function LoginForm() {
 
   const onLogin: SubmitHandler<LoginFormData> = async (data) => {
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
       });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Erreur de connexion");
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
       toast.success("Connecté avec succès ! Redirection...");
       router.push("/admin");
     } catch (error: any) {

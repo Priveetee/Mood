@@ -17,11 +17,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const { email, password } = validatedFields.data;
 
           const user = await prisma.user.findUnique({ where: { email } });
-          if (!user || !user.password) return null;
+          if (!user || !user.password) {
+            return null;
+          }
 
           const passwordsMatch = await bcrypt.compare(password, user.password);
 
-          if (passwordsMatch) return user;
+          if (passwordsMatch) {
+            return user;
+          }
         }
         return null;
       },
@@ -31,7 +35,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     jwt({ token, user }) {
       if (user) {
-        token.id = user.id.toString();
+        token.id = user.id;
       }
       return token;
     },
