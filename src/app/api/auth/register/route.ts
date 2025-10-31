@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { SignJWT } from "jose";
 import prisma from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const { email, username, password, invitationKey } = await req.json();
+    const { email, name, password, invitationKey } = await req.json();
 
-    if (!email || !username || !password) {
+    if (!email || !name || !password) {
       return NextResponse.json(
-        { error: "Email, username et password sont requis" },
+        { error: "Email, name and password are required" },
         { status: 400 },
       );
     }
     if (password.length < 8) {
       return NextResponse.json(
-        { error: "Le password doit avoir au moins 8 caractères" },
+        { error: "Password must be at least 8 characters" },
         { status: 400 },
       );
     }
@@ -26,20 +25,18 @@ export async function POST(req: Request) {
 
     if (!canRegister) {
       return NextResponse.json(
-        { error: "Inscription non autorisée" },
+        { error: "Registration not allowed" },
         { status: 403 },
       );
     }
 
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ email }, { username }],
-      },
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "Email ou username déjà utilisé" },
+        { error: "Email already in use" },
         { status: 409 },
       );
     }
@@ -49,52 +46,16 @@ export async function POST(req: Request) {
     const user = await prisma.user.create({
       data: {
         email,
-        username,
+        name,
         password: hashedPassword,
       },
-      select: { id: true, email: true, username: true },
+      select: { id: true, email: true, name: true },
     });
 
-    const token = await new SignJWT({ userId: user.id, email: user.email })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime(process.env.JWT_EXPIRES_IN!)
-      .sign(new TextEncoder().encode(process.env.JWT_SECRET!));
-
-    let maxAgeSeconds = 14400;
-    const expires = process.env.JWT_EXPIRES_IN;
-    if (expires) {
-      const match = expires.match(/^(\d+)([smhd])$/);
-      if (match) {
-        const value = parseInt(match[1]);
-        const unit = match[2];
-        if (unit === "s") maxAgeSeconds = value;
-        else if (unit === "m") maxAgeSeconds = value * 60;
-        else if (unit === "h") maxAgeSeconds = value * 3600;
-        else if (unit === "h") maxAgeSeconds = value * 14400;
-      }
-    }
-
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax" as const,
-      maxAge: maxAgeSeconds * 1000,
-      path: "/",
-    };
-
-    const response = NextResponse.json(
-      {
-        user: { id: user.id, email: user.email, username: user.username },
-        token,
-      },
-      { status: 201 },
-    );
-    response.cookies.set("auth_token", token, cookieOptions);
-    return response;
+    return NextResponse.json({ user }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { error: "Erreur serveur lors de l'enregistrement" },
+      { error: "Server error during registration" },
       { status: 500 },
     );
   }

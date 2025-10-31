@@ -2,17 +2,15 @@ import { z } from "zod";
 
 export const loginSchema = z.object({
   email: z.string().email({ message: "Adresse email invalide" }),
-  password: z
-    .string()
-    .min(1, { message: "Le mot de passe est requis" }),
+  password: z.string().min(1, { message: "Le mot de passe est requis" }),
 });
 
 export const registerSchema = z
   .object({
     email: z.string().email({ message: "Adresse email invalide" }),
-    username: z
+    name: z
       .string()
-      .min(3, { message: "Le nom d'utilisateur doit faire au moins 3 caractères" }),
+      .min(3, { message: "Le nom doit faire au moins 3 caractères" }),
     password: z
       .string()
       .min(8, { message: "Le mot de passe doit faire au moins 8 caractères" }),

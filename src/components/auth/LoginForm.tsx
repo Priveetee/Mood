@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
@@ -13,6 +12,7 @@ import {
   LoginFormData,
   RegisterFormData,
 } from "@/lib/schemas";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -71,20 +71,8 @@ export default function LoginForm() {
       if (!response.ok) {
         throw new Error(result.error || "Erreur d'enregistrement");
       }
-
       toast.success("Compte créé ! Connexion en cours...");
-
-      const loginResult = await signIn("credentials", {
-        redirect: false,
-        email: data.email,
-        password: data.password,
-      });
-
-      if (loginResult?.error) {
-        throw new Error(loginResult.error);
-      }
-
-      router.push("/admin");
+      await onLogin({ email: data.email, password: data.password });
     } catch (error: any) {
       toast.error(error.message || "Échec de l'enregistrement.");
     }
@@ -92,18 +80,20 @@ export default function LoginForm() {
 
   const onLogin: SubmitHandler<LoginFormData> = async (data) => {
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email: data.email,
-        password: data.password,
+      const result = await authClient.signInEmail({
+        body: {
+          email: data.email,
+          password: data.password,
+        },
       });
 
-      if (result?.error) {
-        throw new Error(result.error);
+      if (result.error) {
+        throw new Error(result.error.message);
       }
 
       toast.success("Connecté avec succès ! Redirection...");
       router.push("/admin");
+      router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Échec de la connexion.");
     }
@@ -256,12 +246,12 @@ export default function LoginForm() {
                       </Label>
                       <Input
                         id="username-register"
-                        {...registerRegister("username")}
+                        {...registerRegister("name")}
                         className="h-12 bg-slate-800 text-white placeholder:text-slate-400"
                       />
-                      {registerErrors.username && (
+                      {registerErrors.name && (
                         <p className="text-sm text-red-500 pt-1">
-                          {registerErrors.username.message}
+                          {registerErrors.name.message}
                         </p>
                       )}
                     </div>
