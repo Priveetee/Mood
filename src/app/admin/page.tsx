@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
+import { BentoCard, BentoGrid } from "@/components/ui/BentoGrid";
 import { PlusCircle, List, BarChart3, Github, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
