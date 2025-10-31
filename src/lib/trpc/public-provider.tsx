@@ -5,27 +5,27 @@ import { httpBatchLink } from "@trpc/client";
 import React, { useState } from "react";
 import superjson from "superjson";
 
-import { trpc } from "./client";
+import { publicTrpc } from "./public-client";
 
-export default function TRPCProvider({
+export default function PublicTRPCProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const [queryClient] = useState(() => new QueryClient({}));
   const [trpcClient] = useState(() =>
-    trpc.createClient({
+    publicTrpc.createClient({
       links: [
         httpBatchLink({
-          url: "/api/trpc",
+          url: "/api/public",
           transformer: superjson,
         }),
       ],
     }),
   );
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+    <publicTrpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </trpc.Provider>
+    </publicTrpc.Provider>
   );
 }
