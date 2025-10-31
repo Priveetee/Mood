@@ -12,7 +12,7 @@ import {
   LoginFormData,
   RegisterFormData,
 } from "@/lib/schemas";
-import { authClient } from "@/lib/auth-client";
+import { signIn, signUp } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,15 +62,16 @@ export default function LoginForm() {
 
   const onRegister: SubmitHandler<RegisterFormData> = async (data) => {
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+      const result = await signUp.email({
+        name: data.name,
+        email: data.email,
+        password: data.password,
       });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || "Erreur d'enregistrement");
+
+      if (result.error) {
+        throw new Error(result.error.message);
       }
+
       toast.success("Compte créé ! Connexion en cours...");
       await onLogin({ email: data.email, password: data.password });
     } catch (error: any) {
@@ -80,11 +81,9 @@ export default function LoginForm() {
 
   const onLogin: SubmitHandler<LoginFormData> = async (data) => {
     try {
-      const result = await authClient.signInEmail({
-        body: {
-          email: data.email,
-          password: data.password,
-        },
+      const result = await signIn.email({
+        email: data.email,
+        password: data.password,
       });
 
       if (result.error) {
