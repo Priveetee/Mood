@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Silk from "@/components/Silk";
@@ -15,7 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { publicTrpc } from "@/lib/trpc/public-client"; // <-- MODIFICATION ICI
+import { publicTrpc } from "@/lib/trpc/public-client";
 
 const moods = [
   { name: "green", emoji: "😄", label: "Très bien", color: "#22c55e" },
@@ -35,16 +35,21 @@ export default function PollClientPage() {
   const [silkColor, setSilkColor] = useState(DEFAULT_SILK_COLOR);
   const [comment, setComment] = useState("");
 
-  const { data: pollInfo, isLoading } = publicTrpc.poll.getInfoByToken.useQuery(
-    pollToken,
-    {
-      onError: (error) => {
-        toast.error(error.message);
-        router.replace("/poll/closed");
-      },
-      retry: false,
-    },
-  );
+  const {
+    data: pollInfo,
+    isLoading,
+    isError,
+    error,
+  } = publicTrpc.poll.getInfoByToken.useQuery(pollToken, {
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (isError) {
+      toast.error(error.message);
+      router.replace("/poll/closed");
+    }
+  }, [isError, error, router]);
 
   const submitVote = publicTrpc.poll.submitVote.useMutation({
     onSuccess: () => {
@@ -108,7 +113,7 @@ export default function PollClientPage() {
             </CardTitle>
             {pollInfo && (
               <CardDescription className="pt-2 text-slate-400">
-                Sondage pour l'équipe de {pollInfo.managerName} (Campagne:{" "}
+                Sondage pour l&apos;équipe de {pollInfo.managerName} (Campagne:{" "}
                 {pollInfo.campaignName})
               </CardDescription>
             )}
@@ -119,7 +124,7 @@ export default function PollClientPage() {
               value={selectedMood ?? ""}
               onValueChange={handleMoodChange}
               className="flex w-full items-center justify-between"
-              disabled={submitVote.isLoading}
+              disabled={submitVote.isPending}
             >
               {moods.map((mood) => (
                 <ToggleGroupItem
@@ -156,15 +161,15 @@ export default function PollClientPage() {
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="min-h-[120px] resize-none border-slate-700 bg-slate-900/80 placeholder:text-slate-500"
-                  disabled={submitVote.isLoading}
+                  disabled={submitVote.isPending}
                 />
               </div>
               <Button
                 type="submit"
                 className="h-12 w-full bg-slate-200 text-lg font-bold text-slate-900 transition-colors hover:bg-slate-300"
-                disabled={!selectedMood || submitVote.isLoading}
+                disabled={!selectedMood || submitVote.isPending}
               >
-                {submitVote.isLoading ? (
+                {submitVote.isPending ? (
                   <div className="w-5 h-5 border-2 border-slate-800 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   "Envoyer mon vote"

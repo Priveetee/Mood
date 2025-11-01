@@ -51,7 +51,7 @@ export const resultsRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const whereClause: any = {};
+      const whereClause: Record<string, unknown> = {};
 
       if (input.campaignId === "all") {
         whereClause.campaign = { createdBy: ctx.session.user.id };

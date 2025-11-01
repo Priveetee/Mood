@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -53,12 +53,6 @@ interface Campaign {
   archived?: boolean;
 }
 
-interface CampaignLink {
-  id: string;
-  managerName: string;
-  url: string;
-}
-
 export default function ActiveCampaignsPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(
@@ -71,28 +65,37 @@ export default function ActiveCampaignsPage() {
 
   const utils = trpc.useUtils();
 
-  const campaignsQuery = trpc.campaign.list.useQuery(undefined, {
-    onError: (error) => {
-      toast.error(error.message || "Échec du chargement des campagnes.");
-    },
-  });
+  const campaignsQuery = trpc.campaign.list.useQuery();
+
+  useEffect(() => {
+    if (campaignsQuery.isError) {
+      toast.error(
+        campaignsQuery.error.message || "Échec du chargement des campagnes.",
+      );
+    }
+  }, [campaignsQuery.isError, campaignsQuery.error]);
 
   const campaignLinksQuery = trpc.campaign.getLinks.useQuery(
     selectedCampaignId!,
     {
       enabled: !!selectedCampaignId,
-      onError: (error) => {
-        toast.error(error.message || "Échec du chargement des liens.");
-      },
     },
   );
+
+  useEffect(() => {
+    if (campaignLinksQuery.isError) {
+      toast.error(
+        campaignLinksQuery.error.message || "Échec du chargement des liens.",
+      );
+    }
+  }, [campaignLinksQuery.isError, campaignLinksQuery.error]);
 
   const addManagerMutation = trpc.campaign.addManager.useMutation({
     onSuccess: () => {
       toast.success(`Manager "${newManagerName}" ajouté !`);
       setIsAddManagerOpen(false);
       utils.campaign.list.invalidate();
-      utils.campaign.getLinks.invalidate({ campaignId: selectedCampaignId! });
+      utils.campaign.getLinks.invalidate(selectedCampaignId!);
     },
     onError: (error) => {
       toast.error(error.message || "Échec de l'ajout du manager.");
@@ -380,10 +383,10 @@ export default function ActiveCampaignsPage() {
               <Button
                 onClick={handleAddManager}
                 disabled={
-                  !newManagerName.trim() || addManagerMutation.isLoading
+                  !newManagerName.trim() || addManagerMutation.isPending
                 }
               >
-                {addManagerMutation.isLoading ? "Ajout..." : "Ajouter"}
+                {addManagerMutation.isPending ? "Ajout..." : "Ajouter"}
               </Button>
             </div>
           </div>

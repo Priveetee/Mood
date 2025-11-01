@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Lock, Eye, EyeOff, KeyRound } from "lucide-react";
+import { publicTrpc } from "@/lib/trpc/public-client";
 
 type FormType = "login" | "register";
 
@@ -26,7 +27,18 @@ export default function LoginForm() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<FormType>("login");
   const [showPassword, setShowPassword] = useState(false);
-  const [canRegister, setCanRegister] = useState(false);
+
+  const { data, isError } = publicTrpc.auth.canRegister.useQuery();
+  const canRegister = data?.canRegister ?? false;
+
+  useEffect(() => {
+    if (isError) {
+      toast.error("Erreur de connexion au serveur d'authentification.");
+    }
+    if (!canRegister && activeTab === "register") {
+      setActiveTab("login");
+    }
+  }, [isError, canRegister, activeTab]);
 
   const {
     register: registerLogin,
@@ -44,22 +56,6 @@ export default function LoginForm() {
     resolver: zodResolver(registerSchema),
   });
 
-  useEffect(() => {
-    async function checkCanRegister() {
-      try {
-        const res = await fetch("/api/auth/can-register");
-        const data = await res.json();
-        setCanRegister(data.canRegister);
-        if (!data.canRegister && activeTab === "register") {
-          setActiveTab("login");
-        }
-      } catch (error) {
-        toast.error("Erreur de connexion au serveur d'authentification.");
-      }
-    }
-    checkCanRegister();
-  }, [activeTab]);
-
   const onRegister: SubmitHandler<RegisterFormData> = async (data) => {
     try {
       const result = await signUp.email({
@@ -74,8 +70,10 @@ export default function LoginForm() {
 
       toast.success("Compte créé ! Connexion en cours...");
       await onLogin({ email: data.email, password: data.password });
-    } catch (error: any) {
-      toast.error(error.message || "Échec de l'enregistrement.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Échec de l'enregistrement.";
+      toast.error(message);
     }
   };
 
@@ -93,8 +91,10 @@ export default function LoginForm() {
       toast.success("Connecté avec succès ! Redirection...");
       router.push("/admin");
       router.refresh();
-    } catch (error: any) {
-      toast.error(error.message || "Échec de la connexion.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Échec de la connexion.";
+      toast.error(message);
     }
   };
 
@@ -297,7 +297,7 @@ export default function LoginForm() {
                         htmlFor="invitation-key"
                         className="text-slate-300"
                       >
-                        Clé d'invitation
+                        Clé d&apos;invitation
                       </Label>
                       <div className="relative">
                         <KeyRound className="absolute left-3 top-3.5 h-5 w-5 text-slate-500" />

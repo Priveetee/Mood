@@ -6,6 +6,7 @@ import { BentoCard, BentoGrid } from "@/components/ui/BentoGrid";
 import { PlusCircle, List, BarChart3, Github, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { signOut } from "@/lib/auth-client";
 
 const dashboardItems = [
   {
@@ -54,14 +55,15 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
-      if (!response.ok) {
-        throw new Error("Erreur de déconnexion");
-      }
+      await signOut();
       toast.success("Déconnecté avec succès !");
       router.push("/login");
-    } catch (error: any) {
-      toast.error(error.message || "Échec de la déconnexion.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Échec de la déconnexion.",
+      );
     }
   };
 

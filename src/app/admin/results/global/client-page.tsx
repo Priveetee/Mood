@@ -73,21 +73,33 @@ export default function GlobalResultsClient() {
     setDateRange(getDateRangeFromPreset(preset));
   };
 
-  const campaignOptionsQuery = trpc.results.getCampaignOptions.useQuery(
-    undefined,
-    {
-      onError: (error) => toast.error(error.message),
-    },
-  );
+  const campaignOptionsQuery = trpc.results.getCampaignOptions.useQuery();
+
+  React.useEffect(() => {
+    if (campaignOptionsQuery.isError) {
+      toast.error(campaignOptionsQuery.error.message);
+    }
+  }, [campaignOptionsQuery.isError, campaignOptionsQuery.error]);
 
   const managerOptionsQuery = trpc.results.getManagerOptions.useQuery(
     { campaignId: selectedCampaignId },
     {
       enabled: mounted,
-      onError: (error) => toast.error(error.message),
-      onSuccess: () => setSelectedManager("all"),
     },
   );
+
+  React.useEffect(() => {
+    if (managerOptionsQuery.isError) {
+      toast.error(managerOptionsQuery.error.message);
+    }
+    if (managerOptionsQuery.isSuccess) {
+      setSelectedManager("all");
+    }
+  }, [
+    managerOptionsQuery.isError,
+    managerOptionsQuery.error,
+    managerOptionsQuery.isSuccess,
+  ]);
 
   const resultsQuery = trpc.results.getFilteredResults.useQuery(
     {
@@ -119,7 +131,7 @@ export default function GlobalResultsClient() {
     try {
       exportToCSV(resultsQuery.data.allVotes, campaignName);
       toast.success("Export CSV réussi !");
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de l'export");
     }
   };

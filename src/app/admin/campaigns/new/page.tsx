@@ -267,7 +267,7 @@ export default function NewCampaignPage() {
                         {expiresAt ? (
                           format(expiresAt, "PPP", { locale: fr })
                         ) : (
-                          <span>Date d'expiration (optionnel)</span>
+                          <span>Date d&apos;expiration (optionnel)</span>
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -337,10 +337,10 @@ export default function NewCampaignPage() {
                     disabled={
                       !campaignName ||
                       managers.length === 0 ||
-                      createCampaign.isLoading
+                      createCampaign.isPending
                     }
                   >
-                    {createCampaign.isLoading ? (
+                    {createCampaign.isPending ? (
                       <div className="w-5 h-5 border-2 border-slate-100 border-t-transparent rounded-full animate-spin" />
                     ) : (
                       "Générer les liens"
