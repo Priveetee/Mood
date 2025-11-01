@@ -5,16 +5,6 @@ import { Canvas, useFrame, useThree, RootState } from "@react-three/fiber";
 import { Color, Mesh, ShaderMaterial } from "three";
 import { IUniform } from "three";
 
-type NormalizedRGB = [number, number, number];
-
-const hexToNormalizedRGB = (hex: string): NormalizedRGB => {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.slice(0, 2), 16) / 255;
-  const g = parseInt(clean.slice(2, 4), 16) / 255;
-  const b = parseInt(clean.slice(4, 6), 16) / 255;
-  return [r, g, b];
-};
-
 interface UniformValue<T = number | Color> {
   value: T;
 }
@@ -156,8 +146,7 @@ const Silk: React.FC<SilkProps> = ({
       uRotation: { value: rotation },
       uTime: { value: 0 },
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [speed, scale, noiseIntensity, color, rotation],
   );
 
   return (

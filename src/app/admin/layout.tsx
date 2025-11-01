@@ -1,9 +1,10 @@
 "use client";
 
-import { useTheme } from "./theme-context";
+import { useTheme } from "./ThemeContext";
 import Silk from "@/components/Silk";
 import { Switch } from "@/components/ui/switch";
 import { Sun, Moon } from "lucide-react";
+import TRPCProvider from "@/lib/trpc/provider";
 
 function AdminBackground() {
   const { silkColor } = useTheme();
@@ -42,10 +43,10 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <TRPCProvider>
       <AdminBackground />
       <ThemeSwitcher />
       <div className="min-h-screen text-white">{children}</div>
-    </>
+    </TRPCProvider>
   );
 }

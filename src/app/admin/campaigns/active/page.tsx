@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -41,6 +41,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
 
 interface Campaign {
   id: number;
@@ -52,71 +53,70 @@ interface Campaign {
   archived?: boolean;
 }
 
-interface CampaignLink {
-  id: string;
-  managerName: string;
-  url: string;
-}
-
 export default function ActiveCampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(
     null,
   );
   const [selectedCampaignName, setSelectedCampaignName] = useState("");
-  const [campaignLinks, setCampaignLinks] = useState<CampaignLink[]>([]);
   const [isLinksDialogOpen, setIsLinksDialogOpen] = useState(false);
   const [isAddManagerOpen, setIsAddManagerOpen] = useState(false);
   const [newManagerName, setNewManagerName] = useState("");
-  const [isAddingManager, setIsAddingManager] = useState(false);
+
+  const utils = trpc.useUtils();
+
+  const campaignsQuery = trpc.campaign.list.useQuery();
 
   useEffect(() => {
-    fetchCampaigns();
-  }, []);
-
-  async function fetchCampaigns() {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/campaigns");
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Erreur lors de la récupération des campagnes.",
-        );
-      }
-
-      setCampaigns(data);
-    } catch (error: any) {
-      toast.error(error.message || "Échec du chargement des campagnes.");
-    } finally {
-      setIsLoading(false);
+    if (campaignsQuery.isError) {
+      toast.error(
+        campaignsQuery.error.message || "Échec du chargement des campagnes.",
+      );
     }
-  }
+  }, [campaignsQuery.isError, campaignsQuery.error]);
 
-  async function fetchCampaignLinks(campaignId: number) {
-    try {
-      const response = await fetch(`/api/campaigns/${campaignId}/links`);
-      const data = await response.json();
+  const campaignLinksQuery = trpc.campaign.getLinks.useQuery(
+    selectedCampaignId!,
+    {
+      enabled: !!selectedCampaignId,
+    },
+  );
 
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Erreur lors de la récupération des liens.",
-        );
-      }
-
-      setCampaignLinks(data);
-    } catch (error: any) {
-      toast.error(error.message || "Échec du chargement des liens.");
+  useEffect(() => {
+    if (campaignLinksQuery.isError) {
+      toast.error(
+        campaignLinksQuery.error.message || "Échec du chargement des liens.",
+      );
     }
-  }
+  }, [campaignLinksQuery.isError, campaignLinksQuery.error]);
+
+  const addManagerMutation = trpc.campaign.addManager.useMutation({
+    onSuccess: () => {
+      toast.success(`Manager "${newManagerName}" ajouté !`);
+      setIsAddManagerOpen(false);
+      utils.campaign.list.invalidate();
+      utils.campaign.getLinks.invalidate(selectedCampaignId!);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Échec de l'ajout du manager.");
+    },
+  });
+
+  const archiveMutation = trpc.campaign.setArchiveStatus.useMutation({
+    onSuccess: (_, variables) => {
+      toast.success(
+        variables.archived ? "Campagne archivée" : "Campagne restaurée",
+      );
+      utils.campaign.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Échec de l'opération.");
+    },
+  });
 
   function openLinksDialog(campaign: Campaign) {
     setSelectedCampaignId(campaign.id);
     setSelectedCampaignName(campaign.name);
-    fetchCampaignLinks(campaign.id);
     setIsLinksDialogOpen(true);
   }
 
@@ -125,45 +125,16 @@ export default function ActiveCampaignsPage() {
     setIsAddManagerOpen(true);
   }
 
-  async function handleAddManager() {
+  function handleAddManager() {
     if (!newManagerName.trim() || !selectedCampaignId) return;
-
-    setIsAddingManager(true);
-    try {
-      const response = await fetch(
-        `/api/campaigns/${selectedCampaignId}/links`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ managerName: newManagerName.trim() }),
-        },
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      toast.success(`Manager "${newManagerName}" ajouté !`);
-      setIsAddManagerOpen(false);
-      await fetchCampaigns();
-      await fetchCampaignLinks(selectedCampaignId);
-    } catch (error: any) {
-      toast.error(error.message || "Échec de l'ajout du manager.");
-    } finally {
-      setIsAddingManager(false);
-    }
+    addManagerMutation.mutate({
+      campaignId: selectedCampaignId,
+      managerName: newManagerName.trim(),
+    });
   }
 
-  async function handleArchive(campaignId: number, archive: boolean) {
-    try {
-      const response = await fetch(`/api/campaigns/${campaignId}/archive`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archived: archive }),
-      });
-      if (!response.ok) throw new Error("Erreur lors de l'archivage.");
-      toast.success(archive ? "Campagne archivée" : "Campagne restaurée");
-      await fetchCampaigns();
-    } catch (error: any) {
-      toast.error(error.message || "Échec de l'opération.");
-    }
+  function handleArchive(campaignId: number, archive: boolean) {
+    archiveMutation.mutate({ campaignId, archived: archive });
   }
 
   function copyToClipboard(text: string) {
@@ -171,11 +142,12 @@ export default function ActiveCampaignsPage() {
     toast.info("Lien copié !");
   }
 
-  const displayedCampaigns = campaigns.filter((c) =>
-    showArchived ? c.archived : !c.archived,
-  );
+  const displayedCampaigns =
+    campaignsQuery.data?.filter((c) =>
+      showArchived ? c.archived : !c.archived,
+    ) ?? [];
 
-  if (isLoading) {
+  if (campaignsQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-transparent rounded-full animate-spin"></div>
@@ -350,12 +322,13 @@ export default function ActiveCampaignsPage() {
               Gérer les liens: {selectedCampaignName}
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              {campaignLinks.length} lien(s) généré(s)
+              {campaignLinksQuery.data?.length ?? 0} lien(s) généré(s)
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[400px] pr-4">
             <div className="space-y-3">
-              {campaignLinks.map((link) => (
+              {campaignLinksQuery.isLoading && <p>Chargement...</p>}
+              {campaignLinksQuery.data?.map((link) => (
                 <div
                   key={link.id}
                   className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 p-3"
@@ -409,9 +382,11 @@ export default function ActiveCampaignsPage() {
             <div className="flex justify-end">
               <Button
                 onClick={handleAddManager}
-                disabled={!newManagerName.trim() || isAddingManager}
+                disabled={
+                  !newManagerName.trim() || addManagerMutation.isPending
+                }
               >
-                {isAddingManager ? "Ajout..." : "Ajouter"}
+                {addManagerMutation.isPending ? "Ajout..." : "Ajouter"}
               </Button>
             </div>
           </div>

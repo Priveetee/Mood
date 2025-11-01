@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -54,7 +55,19 @@ export default function NewCampaignPage() {
   const [managers, setManagers] = useState<string[]>([]);
   const [expiresAt, setExpiresAt] = useState<Date | undefined>();
   const [generatedLinks, setGeneratedLinks] = useState<GeneratedLink[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+
+  const createCampaign = trpc.campaign.create.useMutation({
+    onSuccess: (data) => {
+      setGeneratedLinks(data.generatedLinks);
+      setIsGenerated(true);
+      toast.success(
+        `Campagne "${data.campaignName}" générée avec ${data.generatedLinks.length} liens.`,
+      );
+    },
+    onError: (error) => {
+      toast.error(error.message || "Échec de la création de la campagne.");
+    },
+  });
 
   const handleAddManager = () => {
     if (currentManager.trim() && !managers.includes(currentManager.trim())) {
@@ -69,37 +82,12 @@ export default function NewCampaignPage() {
     toast.error(`Manager "${managerToRemove}" supprimé.`);
   };
 
-  const handleGenerate = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/campaigns", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: campaignName,
-          managers: managers,
-          expiresAt: expiresAt,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur de création de campagne");
-      }
-
-      setGeneratedLinks(data.generatedLinks);
-      setIsGenerated(true);
-      toast.success(
-        `Campagne "${campaignName}" générée avec ${data.generatedLinks.length} liens.`,
-      );
-    } catch (error: any) {
-      toast.error(error.message || "Échec de la création de la campagne.");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleGenerate = () => {
+    createCampaign.mutate({
+      name: campaignName,
+      managers: managers,
+      expiresAt: expiresAt,
+    });
   };
 
   const copyToClipboard = (text: string, message: string) => {
@@ -279,7 +267,7 @@ export default function NewCampaignPage() {
                         {expiresAt ? (
                           format(expiresAt, "PPP", { locale: fr })
                         ) : (
-                          <span>Date d'expiration (optionnel)</span>
+                          <span>Date d&apos;expiration (optionnel)</span>
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -347,10 +335,12 @@ export default function NewCampaignPage() {
                     onClick={handleGenerate}
                     className="w-full h-12 text-lg font-semibold"
                     disabled={
-                      !campaignName || managers.length === 0 || isLoading
+                      !campaignName ||
+                      managers.length === 0 ||
+                      createCampaign.isPending
                     }
                   >
-                    {isLoading ? (
+                    {createCampaign.isPending ? (
                       <div className="w-5 h-5 border-2 border-slate-100 border-t-transparent rounded-full animate-spin" />
                     ) : (
                       "Générer les liens"
