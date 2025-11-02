@@ -131,7 +131,7 @@ export const resultsRouter = router({
         {
           name: "Moyen",
           votes: moodCounts.yellow,
-          fill: "#f97316",
+          fill: "#facc15",
           emoji: "😕",
         },
         {

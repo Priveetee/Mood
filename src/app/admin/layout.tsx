@@ -7,28 +7,22 @@ import { Switch } from "@/components/ui/switch";
 import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import TRPCProvider from "@/lib/trpc/provider";
+import { SilkProvider } from "./SilkContext";
 
 const lightThemeColor = "#1a55e0";
-const darkThemeColor = "#1e3b80";
+const darkThemeColor = "#29204b";
 
-function AdminBackground() {
-  const { theme } = useTheme();
-  const [silkColor, setSilkColor] = useState(darkThemeColor);
-
-  useEffect(() => {
-    setSilkColor(theme === "light" ? lightThemeColor : darkThemeColor);
-  }, [theme]);
-
+function AdminBackground({ color }: { color: string }) {
   return (
     <AnimatePresence>
       <motion.div
-        key={silkColor}
+        key={color}
         className="fixed top-0 left-0 -z-10 h-screen w-screen"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1, transition: { duration: 0.75 } }}
         exit={{ opacity: 0, transition: { duration: 0.75 } }}
       >
-        <Silk color={silkColor} />
+        <Silk color={color} />
       </motion.div>
     </AnimatePresence>
   );
@@ -55,11 +49,20 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { theme } = useTheme();
+  const [silkColor, setSilkColor] = useState(darkThemeColor);
+
+  useEffect(() => {
+    setSilkColor(theme === "light" ? lightThemeColor : darkThemeColor);
+  }, [theme]);
+
   return (
     <TRPCProvider>
-      <AdminBackground />
-      <ThemeSwitcher />
-      <div className="min-h-screen text-slate-50">{children}</div>
+      <SilkProvider setSilkColor={setSilkColor}>
+        <AdminBackground color={silkColor} />
+        <ThemeSwitcher />
+        <div className="min-h-screen text-slate-50">{children}</div>
+      </SilkProvider>
     </TRPCProvider>
   );
 }

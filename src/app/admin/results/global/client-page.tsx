@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { useTheme } from "next-themes";
+import { useSilk } from "@/app/admin/SilkContext";
 import { exportToCSV } from "@/lib/export-csv";
 import { FilterBar } from "./components/FilterBar";
 import { DatePresetBar, DatePreset } from "./components/DatePresetBar";
@@ -15,8 +16,8 @@ import { MoodChart } from "./components/MoodChart";
 import { CommentsList } from "./components/CommentsList";
 import { StatsCards } from "./components/StatsCards";
 
-const lightThemeColor = "#1b5798";
-const darkThemeColor = "#271744";
+const lightThemeColor = "#1a55e0";
+const darkThemeColor = "#29204b";
 
 const getDateRangeFromPreset = (preset: DatePreset) => {
   const now = new Date();
@@ -45,6 +46,9 @@ const getDateRangeFromPreset = (preset: DatePreset) => {
 
 export default function GlobalResultsClient() {
   const searchParams = useSearchParams();
+  const { setSilkColor } = useSilk();
+  const { theme } = useTheme();
+
   const [mounted, setMounted] = React.useState(false);
   const [datePreset, setDatePreset] = React.useState<DatePreset>("year");
   const [dateRange, setDateRange] = React.useState<
@@ -56,16 +60,24 @@ export default function GlobalResultsClient() {
   const [selectedManager, setSelectedManager] = React.useState<string | "all">(
     "all",
   );
-  const { theme } = useTheme();
+
+  const defaultSilkColor = React.useMemo(() => {
+    return theme === "light" ? lightThemeColor : darkThemeColor;
+  }, [theme]);
 
   const handleMoodHover = (color: string) => {
-    document.documentElement.style.setProperty("--silk-color", color);
+    setSilkColor(color);
   };
 
   const handleMoodLeave = () => {
-    const defaultColor = theme === "light" ? lightThemeColor : darkThemeColor;
-    document.documentElement.style.setProperty("--silk-color", defaultColor);
+    setSilkColor(defaultSilkColor);
   };
+
+  React.useEffect(() => {
+    return () => {
+      setSilkColor(defaultSilkColor);
+    };
+  }, [defaultSilkColor, setSilkColor]);
 
   React.useEffect(() => {
     const campaignIdParam = searchParams.get("campaignId");
