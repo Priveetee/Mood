@@ -38,6 +38,27 @@ The application is configured using an `.env` file. First, copy the example file
 ```bash
 cp .env.example .env
 ```
+Please consider that in this .env.example I give you an example of a good .env, do note use in Production since it is publicly available !
+
+You can generate a good .env using this command on Linux :
+
+```bash
+openssl rand -hex 32
+```
+If you you have an output with a special character like =! or other it might break since bash would read until the for example = so I advise you to not use special character or surround it with ""
+
+Example :
+
+```bash
+24cbe023aeb3bddff2c2bdf0cdb317f12d397ac=53f85a68968eda158aa900b0
+```
+
+Bash would read until 24cbe023aeb3bddff2c2bdf0cdb317f12d397ac and consider =53f85a68968eda158aa900b0 another sentence.
+
+```bash
+24cbe023aeb3bddff2c2bdf0cdb317f12d397ac153f85a68968eda158aa900b0
+```
+Bash would read the entirety !
 
 Next, open the `.env` file with a text editor and set the following variables:
 
