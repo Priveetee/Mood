@@ -34,6 +34,7 @@ RUN bun install --production
 
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY prisma ./prisma
 COPY entrypoint.sh .
