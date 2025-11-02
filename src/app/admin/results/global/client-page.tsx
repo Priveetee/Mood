@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { useTheme } from "@/app/admin/ThemeContext";
+import { useTheme } from "next-themes";
 import { exportToCSV } from "@/lib/export-csv";
 import { FilterBar } from "./components/FilterBar";
 import { DatePresetBar, DatePreset } from "./components/DatePresetBar";
@@ -15,7 +15,8 @@ import { MoodChart } from "./components/MoodChart";
 import { CommentsList } from "./components/CommentsList";
 import { StatsCards } from "./components/StatsCards";
 
-const darkThemeColor = "#3f3f5a";
+const lightThemeColor = "#1b5798";
+const darkThemeColor = "#271744";
 
 const getDateRangeFromPreset = (preset: DatePreset) => {
   const now = new Date();
@@ -55,7 +56,16 @@ export default function GlobalResultsClient() {
   const [selectedManager, setSelectedManager] = React.useState<string | "all">(
     "all",
   );
-  const { setSilkColor } = useTheme();
+  const { theme } = useTheme();
+
+  const handleMoodHover = (color: string) => {
+    document.documentElement.style.setProperty("--silk-color", color);
+  };
+
+  const handleMoodLeave = () => {
+    const defaultColor = theme === "light" ? lightThemeColor : darkThemeColor;
+    document.documentElement.style.setProperty("--silk-color", defaultColor);
+  };
 
   React.useEffect(() => {
     const campaignIdParam = searchParams.get("campaignId");
@@ -112,10 +122,6 @@ export default function GlobalResultsClient() {
     },
   );
 
-  React.useEffect(() => {
-    return () => setSilkColor(darkThemeColor);
-  }, [setSilkColor]);
-
   const handleExportCSV = () => {
     if (!resultsQuery.data || resultsQuery.data.totalVotes === 0) {
       toast.error("Aucune donnée à exporter");
@@ -159,7 +165,7 @@ export default function GlobalResultsClient() {
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <header className="mb-10 max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold text-white">Résultats Globaux</h1>
+          <h1 className="text-4xl font-bold">Résultats Globaux</h1>
           <p className="text-slate-400 mt-2">
             Analysez et filtrez les résultats de toutes les campagnes.
           </p>
@@ -200,8 +206,8 @@ export default function GlobalResultsClient() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <MoodChart
                   data={resultsQuery.data.moodDistribution}
-                  onMoodHover={setSilkColor}
-                  onMoodLeave={() => setSilkColor(darkThemeColor)}
+                  onMoodHover={handleMoodHover}
+                  onMoodLeave={handleMoodLeave}
                 />
                 <CommentsList comments={resultsQuery.data.comments} />
               </div>
@@ -215,9 +221,9 @@ export default function GlobalResultsClient() {
                     resultsQuery.data.moodDistribution.find(
                       (m) => m.name === resultsQuery.data.dominantMood,
                     );
-                  if (dominantMoodData) setSilkColor(dominantMoodData.fill);
+                  if (dominantMoodData) handleMoodHover(dominantMoodData.fill);
                 }}
-                onDominantMoodLeave={() => setSilkColor(darkThemeColor)}
+                onDominantMoodLeave={handleMoodLeave}
               />
             </>
           )}

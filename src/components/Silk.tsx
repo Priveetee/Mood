@@ -1,6 +1,12 @@
 "use client";
 
-import React, { forwardRef, useMemo, useRef, useLayoutEffect } from "react";
+import React, {
+  forwardRef,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+  useEffect,
+} from "react";
 import { Canvas, useFrame, useThree, RootState } from "@react-three/fiber";
 import { Color, Mesh, ShaderMaterial } from "three";
 import { IUniform } from "three";
@@ -78,11 +84,10 @@ void main() {
 
 interface SilkPlaneProps {
   uniforms: SilkUniforms;
-  targetColor: Color;
 }
 
 const SilkPlane = forwardRef<Mesh, SilkPlaneProps>(function SilkPlane(
-  { uniforms, targetColor },
+  { uniforms },
   ref,
 ) {
   const { viewport } = useThree();
@@ -101,7 +106,6 @@ const SilkPlane = forwardRef<Mesh, SilkPlaneProps>(function SilkPlane(
         uniforms: SilkUniforms;
       };
       material.uniforms.uTime.value += 0.1 * delta;
-      material.uniforms.uColor.value.lerp(targetColor, delta * 3);
     }
   });
 
@@ -135,8 +139,6 @@ const Silk: React.FC<SilkProps> = ({
 }) => {
   const meshRef = useRef<Mesh>(null);
 
-  const targetColor = useMemo(() => new Color(color), [color]);
-
   const uniforms = useMemo<SilkUniforms>(
     () => ({
       uSpeed: { value: speed },
@@ -149,9 +151,18 @@ const Silk: React.FC<SilkProps> = ({
     [speed, scale, noiseIntensity, color, rotation],
   );
 
+  useEffect(() => {
+    if (meshRef.current) {
+      const material = meshRef.current.material as ShaderMaterial & {
+        uniforms: SilkUniforms;
+      };
+      material.uniforms.uColor.value.lerp(new Color(color), 0.2);
+    }
+  }, [color]);
+
   return (
     <Canvas dpr={[1, 2]} frameloop="always">
-      <SilkPlane ref={meshRef} uniforms={uniforms} targetColor={targetColor} />
+      <SilkPlane ref={meshRef} uniforms={uniforms} />
     </Canvas>
   );
 };
