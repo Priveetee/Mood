@@ -138,8 +138,19 @@ export default function ActiveCampaignsPage() {
   }
 
   function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
-    toast.info("Lien copié !");
+    if (!navigator.clipboard) {
+      toast.error("La copie n'est pas supportée sur ce navigateur.");
+      return;
+    }
+    navigator.clipboard.writeText(text).then(
+      () => {
+        toast.success("Lien copié !");
+      },
+      (err) => {
+        toast.error("Échec de la copie.");
+        console.error("Could not copy text: ", err);
+      },
+    );
   }
 
   const displayedCampaigns =
