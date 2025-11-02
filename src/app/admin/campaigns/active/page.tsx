@@ -138,10 +138,14 @@ export default function ActiveCampaignsPage() {
   }
 
   function copyToClipboard(text: string) {
-    if (!navigator.clipboard) {
-      toast.error("La copie n'est pas supportée sur ce navigateur.");
+    if (!navigator.clipboard || !window.isSecureContext) {
+      toast.error("Fonctionnalité non disponible.", {
+        description:
+          "La copie n'est supportée que sur localhost ou une connexion HTTPS.",
+      });
       return;
     }
+
     navigator.clipboard.writeText(text).then(
       () => {
         toast.success("Lien copié !");
