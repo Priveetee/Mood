@@ -19,31 +19,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Development service
-  web-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    container_name: mood_web_dev
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      AUTH_SECRET: ${AUTH_SECRET}
-      INVITATION_KEY: ${INVITATION_KEY}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-      NODE_ENV: development
-    ports:
-      - "3000:3000"
-    networks:
-      - mood_network
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  # Production service
   web:
     build:
       context: .
@@ -51,6 +26,7 @@ services:
     container_name: mood_web_prod
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
       AUTH_SECRET: ${AUTH_SECRET}
       INVITATION_KEY: ${INVITATION_KEY}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
