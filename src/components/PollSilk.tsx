@@ -68,15 +68,26 @@ void main() {
 `;
 
 interface SilkPlaneProps {
-  uniforms: SilkUniforms;
+  color: string;
 }
 
 const SilkPlane = forwardRef<Mesh, SilkPlaneProps>(function SilkPlane(
-  { uniforms },
+  { color },
   ref,
 ) {
   const { viewport } = useThree();
-  const targetColor = useMemo(() => uniforms.uColor.value, [uniforms.uColor]);
+  const uniforms = useMemo(
+    () => ({
+      uSpeed: { value: 3 },
+      uScale: { value: 2.5 },
+      uNoiseIntensity: { value: 1.2 },
+      uColor: { value: new Color(color) },
+      uRotation: { value: 0.1 },
+      uTime: { value: 0 },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   useLayoutEffect(() => {
     const mesh = ref as React.MutableRefObject<Mesh | null>;
@@ -92,7 +103,7 @@ const SilkPlane = forwardRef<Mesh, SilkPlaneProps>(function SilkPlane(
         uniforms: SilkUniforms;
       };
       material.uniforms.uTime.value += 0.1 * delta;
-      material.uniforms.uColor.value.lerp(targetColor, delta * 2);
+      material.uniforms.uColor.value.lerp(new Color(color), delta * 2);
     }
   });
 
@@ -109,40 +120,18 @@ const SilkPlane = forwardRef<Mesh, SilkPlaneProps>(function SilkPlane(
 });
 SilkPlane.displayName = "SilkPlane";
 
-export interface SilkProps {
-  speed?: number;
-  scale?: number;
+export interface PollSilkProps {
   color?: string;
-  noiseIntensity?: number;
-  rotation?: number;
 }
 
-const Silk: React.FC<SilkProps> = ({
-  speed = 3,
-  scale = 1.2,
-  color = "#430AC7",
-  noiseIntensity = 0.8,
-  rotation = 0,
-}) => {
+const PollSilk: React.FC<PollSilkProps> = ({ color = "#1a1a2e" }) => {
   const meshRef = useRef<Mesh>(null);
-
-  const uniforms = useMemo<SilkUniforms>(
-    () => ({
-      uSpeed: { value: speed },
-      uScale: { value: scale },
-      uNoiseIntensity: { value: noiseIntensity },
-      uColor: { value: new Color(color) },
-      uRotation: { value: rotation },
-      uTime: { value: 0 },
-    }),
-    [speed, scale, noiseIntensity, color, rotation],
-  );
 
   return (
     <Canvas dpr={[1, 2]} frameloop="always">
-      <SilkPlane ref={meshRef} uniforms={uniforms} />
+      <SilkPlane ref={meshRef} color={color} />
     </Canvas>
   );
 };
 
-export default Silk;
+export default PollSilk;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import Silk from "@/components/Silk";
+import PollSilk from "@/components/PollSilk";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,11 +20,12 @@ import { publicTrpc } from "@/lib/trpc/public-client";
 const moods = [
   { name: "green", emoji: "😄", label: "Très bien", color: "#22c55e" },
   { name: "blue", emoji: "🙂", label: "Neutre", color: "#38bdf8" },
-  { name: "yellow", emoji: "😕", label: "Moyen", color: "#e7f708" },
+  { name: "yellow", emoji: "😕", label: "Moyen", color: "#facc15" },
   { name: "red", emoji: "😠", label: "Pas bien", color: "#ef4444" },
 ];
 
 const DEFAULT_SILK_COLOR = "#1a1a2e";
+const TRANSITION_DELAY = 1100;
 
 export default function PollClientPage() {
   const params = useParams();
@@ -32,8 +33,8 @@ export default function PollClientPage() {
   const pollToken = params.link as string;
 
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [silkColor, setSilkColor] = useState(DEFAULT_SILK_COLOR);
   const [comment, setComment] = useState("");
+  const [silkColor, setSilkColor] = useState(DEFAULT_SILK_COLOR);
 
   const {
     data: pollInfo,
@@ -58,27 +59,40 @@ export default function PollClientPage() {
       );
       setSelectedMood(null);
       setComment("");
-      setSilkColor(DEFAULT_SILK_COLOR);
+      handleMoodChange(null);
     },
     onError: (error) => {
       toast.error(error.message || "Échec de l'enregistrement du vote.");
     },
   });
 
-  const handleMoodChange = (value: string) => {
-    setSelectedMood(value);
-    const mood = moods.find((m) => m.name === value);
-    setSilkColor(mood?.color || DEFAULT_SILK_COLOR);
+  const handleMoodChange = (value: string | null) => {
+    const newColor = value
+      ? moods.find((m) => m.name === value)?.color || DEFAULT_SILK_COLOR
+      : DEFAULT_SILK_COLOR;
+
+    if (value) {
+      setSelectedMood(value);
+    } else {
+      setSelectedMood(null);
+    }
+
+    if (silkColor !== DEFAULT_SILK_COLOR && silkColor !== newColor) {
+      setSilkColor(DEFAULT_SILK_COLOR);
+      setTimeout(() => {
+        setSilkColor(newColor);
+      }, TRANSITION_DELAY);
+    } else {
+      setSilkColor(newColor);
+    }
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     if (!selectedMood) {
       toast.error("Veuillez sélectionner une humeur.");
       return;
     }
-
     submitVote.mutate({
       pollToken,
       mood: selectedMood as "green" | "blue" | "yellow" | "red",
@@ -97,13 +111,7 @@ export default function PollClientPage() {
   return (
     <>
       <div className="fixed top-0 left-0 -z-10 h-screen w-screen">
-        <Silk
-          color={silkColor}
-          scale={2.5}
-          speed={3}
-          noiseIntensity={1.2}
-          rotation={0.1}
-        />
+        <PollSilk color={silkColor} />
       </div>
       <main className="flex min-h-screen flex-col items-center justify-center p-4">
         <Card className="w-full max-w-2xl rounded-2xl border-slate-800 bg-slate-900/80 text-white backdrop-blur-lg">
@@ -145,7 +153,6 @@ export default function PollClientPage() {
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
-
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid w-full gap-2">
                 <Label
