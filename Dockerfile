@@ -7,6 +7,7 @@ COPY --from=bun_installer /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=bun_installer /usr/local/bin/bunx /usr/local/bin/bunx
 RUN bun upgrade
 COPY package.json bun.lock ./
+RUN bun pm cache rm
 RUN bun install
 
 FROM node:22 AS builder
@@ -30,6 +31,7 @@ COPY --from=bun_installer /usr/local/bin/bunx /usr/local/bin/bunx
 RUN bun upgrade
 
 COPY package.json bun.lock ./
+RUN bun pm cache rm
 RUN bun install --production
 
 COPY --from=builder /app/.next ./.next

@@ -7,7 +7,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Mood App",
+  title: "Mood",
   description: "Anonymous team mood polling",
 };
 
