@@ -39,6 +39,7 @@ import {
   Archive,
   ArchiveRestore,
   ChevronDown,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
@@ -93,6 +94,7 @@ export default function ActiveCampaignsPage() {
   const addManagerMutation = trpc.campaign.addManager.useMutation({
     onSuccess: () => {
       toast.success(`Manager "${newManagerName}" ajouté !`);
+      setNewManagerName("");
       setIsAddManagerOpen(false);
       utils.campaign.list.invalidate();
       utils.campaign.getLinks.invalidate(selectedCampaignId!);
@@ -121,7 +123,7 @@ export default function ActiveCampaignsPage() {
   }
 
   function openAddManagerDialog() {
-    setNewManagerName("");
+    setIsLinksDialogOpen(false);
     setIsAddManagerOpen(true);
   }
 
@@ -150,12 +152,32 @@ export default function ActiveCampaignsPage() {
       () => {
         toast.success("Lien copié !");
       },
-      (err) => {
+      () => {
         toast.error("Échec de la copie.");
-        console.error("Could not copy text: ", err);
       },
     );
   }
+
+  const handleCopyAll = () => {
+    if (!campaignLinksQuery.data) return;
+    const allLinks = campaignLinksQuery.data
+      .map((link) => `${link.managerName}: ${link.url}`)
+      .join("\n");
+    copyToClipboard(allLinks);
+  };
+
+  const handleSendEmail = () => {
+    if (!campaignLinksQuery.data) return;
+    const allLinks = campaignLinksQuery.data
+      .map((link) => `${link.managerName}: ${link.url}`)
+      .join("\n");
+    const subject = `Liens pour la campagne de sondage: ${selectedCampaignName}`;
+    const body = `Bonjour,\n\nVoici les liens de sondage pour vos équipes respectives :\n\n${allLinks}\n\nCordialement.`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
+    toast.info("Ouverture de votre client de messagerie...");
+  };
 
   const displayedCampaigns =
     campaignsQuery.data?.filter((c) =>
@@ -293,7 +315,7 @@ export default function ActiveCampaignsPage() {
                               className="cursor-pointer"
                             >
                               <Edit className="mr-2 h-4 w-4" />
-                              Gérer les liens
+                              Gérer la campagne
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
@@ -332,13 +354,33 @@ export default function ActiveCampaignsPage() {
 
       <Dialog open={isLinksDialogOpen} onOpenChange={setIsLinksDialogOpen}>
         <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-white">
-              Gérer les liens: {selectedCampaignName}
-            </DialogTitle>
-            <DialogDescription className="text-slate-400">
-              {campaignLinksQuery.data?.length ?? 0} lien(s) généré(s)
-            </DialogDescription>
+          <DialogHeader className="flex-row items-center justify-between pr-6">
+            <div className="space-y-1">
+              <DialogTitle className="text-white">
+                Gérer la campagne: {selectedCampaignName}
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                {campaignLinksQuery.data?.length ?? 0} lien(s) généré(s)
+              </DialogDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
+                onClick={handleCopyAll}
+              >
+                <Copy className="h-4 w-4" />
+                Tout copier
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
+                onClick={handleSendEmail}
+              >
+                <Send className="h-4 w-4" />
+                Envoyer par mail
+              </Button>
+            </div>
           </DialogHeader>
           <ScrollArea className="max-h-[400px] pr-4">
             <div className="space-y-3">
@@ -376,7 +418,13 @@ export default function ActiveCampaignsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isAddManagerOpen} onOpenChange={setIsAddManagerOpen}>
+      <Dialog
+        open={isAddManagerOpen}
+        onOpenChange={(open) => {
+          setIsAddManagerOpen(open);
+          if (!open) setIsLinksDialogOpen(true);
+        }}
+      >
         <DialogContent className="bg-slate-900 border-slate-800 text-white">
           <DialogHeader>
             <DialogTitle className="text-white">
