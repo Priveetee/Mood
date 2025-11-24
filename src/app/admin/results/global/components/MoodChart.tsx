@@ -110,15 +110,7 @@ export function MoodChart({ data, onMoodHover, onMoodLeave }: MoodChartProps) {
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none text-slate-300">
-          Tendance positive de 3.4% ce mois-ci{" "}
-          <TrendingUp className="h-4 w-4 text-green-500" />
-        </div>
-        <div className="leading-none text-slate-500">
-          Affichage des résultats pour la période complète
-        </div>
-      </CardFooter>
+      <CardFooter className="flex-col gap-2 text-sm"></CardFooter>
     </Card>
   );
 }
