@@ -123,7 +123,7 @@ export const resultsRouter = router({
           emoji: "😄",
         },
         {
-          name: "Neutre",
+          name: "Bien",
           votes: moodCounts.blue,
           fill: "#38bdf8",
           emoji: "🙂",

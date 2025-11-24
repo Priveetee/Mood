@@ -19,7 +19,7 @@ import { publicTrpc } from "@/lib/trpc/public-client";
 
 const moods = [
   { name: "green", emoji: "😄", label: "Très bien", color: "#22c55e" },
-  { name: "blue", emoji: "🙂", label: "Neutre", color: "#38bdf8" },
+  { name: "blue", emoji: "🙂", label: "Bien", color: "#38bdf8" },
   { name: "yellow", emoji: "😕", label: "Moyen", color: "#facc15" },
   { name: "red", emoji: "😠", label: "Pas bien", color: "#ef4444" },
 ];

@@ -30,7 +30,7 @@ export const exportToCSV = (votes: VoteData[], campaignName: string) => {
       vote.mood === "green"
         ? "Très bien"
         : vote.mood === "blue"
-          ? "Neutre"
+          ? "Bien"
           : vote.mood === "yellow"
             ? "Moyen"
             : vote.mood === "red"

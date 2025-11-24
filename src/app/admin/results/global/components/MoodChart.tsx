@@ -31,7 +31,7 @@ interface MoodChartProps {
 const chartConfig = {
   votes: { label: "Votes" },
   "Très bien": { label: "Très bien", color: "#22c55e" },
-  Neutre: { label: "Neutre", color: "#38bdf8" },
+  Bien: { label: "Bien", color: "#38bdf8" },
   Moyen: { label: "Moyen", color: "#facc15" },
   "Pas bien": { label: "Pas bien", color: "#ef4444" },
 } satisfies ChartConfig;
