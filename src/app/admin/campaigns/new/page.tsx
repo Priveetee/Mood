@@ -28,6 +28,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
+import { Switch } from "@/components/ui/switch";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -55,6 +56,7 @@ export default function NewCampaignPage() {
   const [managers, setManagers] = useState<string[]>([]);
   const [expiresAt, setExpiresAt] = useState<Date | undefined>();
   const [generatedLinks, setGeneratedLinks] = useState<GeneratedLink[]>([]);
+  const [commentsRequired, setCommentsRequired] = useState(false);
 
   const createCampaign = trpc.campaign.create.useMutation({
     onSuccess: (data) => {
@@ -87,6 +89,7 @@ export default function NewCampaignPage() {
       name: campaignName,
       managers: managers,
       expiresAt: expiresAt,
+      commentsRequired: commentsRequired,
     });
   };
 
@@ -299,6 +302,21 @@ export default function NewCampaignPage() {
                       />
                     </PopoverContent>
                   </Popover>
+
+                  <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/60 px-4 py-3">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-slate-200">
+                        Commentaires obligatoires
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        Si activé, chaque vote devra inclure un commentaire.
+                      </span>
+                    </div>
+                    <Switch
+                      checked={commentsRequired}
+                      onCheckedChange={(value) => setCommentsRequired(value)}
+                    />
+                  </div>
 
                   {managers.length > 0 && (
                     <ScrollArea className="h-48 w-full">

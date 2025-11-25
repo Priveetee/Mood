@@ -54,6 +54,7 @@ export const campaignRouter = router({
           participationRate,
           totalVotes: campaign._count.votes,
           archived: campaign.archived || false,
+          commentsRequired: campaign.commentsRequired,
         };
       }),
     );
@@ -162,6 +163,7 @@ export const campaignRouter = router({
         name: z.string().min(1),
         managers: z.array(z.string().min(1)),
         expiresAt: z.date().optional(),
+        commentsRequired: z.boolean().optional().default(false),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -171,6 +173,7 @@ export const campaignRouter = router({
           createdBy: ctx.session.user.id,
           archived: false,
           expiresAt: input.expiresAt,
+          commentsRequired: input.commentsRequired ?? false,
         },
       });
 
@@ -197,6 +200,7 @@ export const campaignRouter = router({
         campaignId: campaign.id,
         campaignName: campaign.name,
         generatedLinks,
+        commentsRequired: campaign.commentsRequired,
       };
     }),
 });

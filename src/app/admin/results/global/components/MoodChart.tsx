@@ -1,4 +1,3 @@
-import { TrendingUp } from "lucide-react";
 import { Pie, PieChart, Cell } from "recharts";
 import {
   Card,

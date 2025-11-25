@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { router, procedure } from "../trpc";
+import { TRPCError } from "@trpc/server";
 
 export const pollRouter = router({
   getInfoByToken: procedure
@@ -12,6 +13,7 @@ export const pollRouter = router({
           campaign: {
             select: {
               name: true,
+              commentsRequired: true,
             },
           },
         },
@@ -24,6 +26,7 @@ export const pollRouter = router({
       return {
         managerName: pollLink.managerName,
         campaignName: pollLink.campaign.name,
+        commentsRequired: pollLink.campaign.commentsRequired,
       };
     }),
 
@@ -33,7 +36,7 @@ export const pollRouter = router({
         pollToken: z.string(),
         mood: z.enum(["green", "blue", "yellow", "red"]),
         comment: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const pollLink = await ctx.prisma.pollLink.findUnique({
@@ -42,7 +45,31 @@ export const pollRouter = router({
       });
 
       if (!pollLink) {
-        throw new Error("Lien de sondage introuvable ou expiré");
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Lien de sondage introuvable ou expiré",
+        });
+      }
+
+      const campaign = await ctx.prisma.campaign.findUnique({
+        where: { id: pollLink.campaignId },
+        select: { commentsRequired: true },
+      });
+
+      if (!campaign) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Campagne introuvable",
+        });
+      }
+
+      const trimmedComment = input.comment?.trim() ?? "";
+
+      if (campaign.commentsRequired && trimmedComment.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Le commentaire est obligatoire pour cette campagne.",
+        });
       }
 
       const vote = await ctx.prisma.vote.create({
@@ -50,7 +77,7 @@ export const pollRouter = router({
           pollLinkId: pollLink.id,
           campaignId: pollLink.campaignId,
           mood: input.mood,
-          comment: input.comment || null,
+          comment: trimmedComment.length > 0 ? trimmedComment : null,
         },
       });
 

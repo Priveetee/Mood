@@ -45,6 +45,8 @@ export default function PollClientPage() {
     retry: false,
   });
 
+  const commentsRequired = pollInfo?.commentsRequired ?? false;
+
   useEffect(() => {
     if (isError) {
       toast.error(error.message);
@@ -93,10 +95,15 @@ export default function PollClientPage() {
       toast.error("Veuillez sélectionner une humeur.");
       return;
     }
+    const trimmedComment = comment.trim();
+    if (commentsRequired && trimmedComment.length === 0) {
+      toast.error("Le commentaire est obligatoire pour cette campagne.");
+      return;
+    }
     submitVote.mutate({
       pollToken,
       mood: selectedMood as "green" | "blue" | "yellow" | "red",
-      comment: comment.trim() || undefined,
+      comment: trimmedComment || undefined,
     });
   };
 
@@ -159,7 +166,9 @@ export default function PollClientPage() {
                   htmlFor="comment"
                   className="text-base font-semibold text-slate-300"
                 >
-                  Laisser un commentaire (optionnel)
+                  {commentsRequired
+                    ? "Commentaire (obligatoire)"
+                    : "Laisser un commentaire (optionnel)"}
                 </Label>
                 <Textarea
                   id="comment"

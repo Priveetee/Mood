@@ -39,6 +39,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
