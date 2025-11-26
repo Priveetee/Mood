@@ -5,13 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import PollSilk from "@/components/PollSilk";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -63,8 +57,8 @@ export default function PollClientPage() {
       setComment("");
       handleMoodChange(null);
     },
-    onError: (error) => {
-      toast.error(error.message || "Échec de l'enregistrement du vote.");
+    onError: (submitError) => {
+      toast.error(submitError.message || "Échec de l'enregistrement du vote.");
     },
   });
 
@@ -110,14 +104,14 @@ export default function PollClientPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-transparent rounded-full animate-spin"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-transparent" />
       </div>
     );
   }
 
   return (
     <>
-      <div className="fixed top-0 left-0 -z-10 h-screen w-screen">
+      <div className="fixed left-0 top-0 -z-10 h-screen w-screen">
         <PollSilk color={silkColor} />
       </div>
       <main className="flex min-h-screen flex-col items-center justify-center p-4">
@@ -126,12 +120,6 @@ export default function PollClientPage() {
             <CardTitle className="text-4xl font-bold tracking-tight">
               Comment vous sentez-vous ?
             </CardTitle>
-            {pollInfo && (
-              <CardDescription className="pt-2 text-slate-400">
-                Sondage pour l&apos;équipe de {pollInfo.managerName} (Campagne:{" "}
-                {pollInfo.campaignName})
-              </CardDescription>
-            )}
           </CardHeader>
           <CardContent className="space-y-10 p-10">
             <ToggleGroup
@@ -167,13 +155,17 @@ export default function PollClientPage() {
                   className="text-base font-semibold text-slate-300"
                 >
                   {commentsRequired
-                    ? "Commentaire (obligatoire)"
+                    ? "Commentaire (obligatoire...)"
                     : "Laisser un commentaire (optionnel)"}
                 </Label>
                 <Textarea
                   id="comment"
                   name="comment"
-                  placeholder="Partagez plus de détails ici..."
+                  placeholder={
+                    commentsRequired
+                      ? "Par exemple : bien, pas bien, normal..."
+                      : "Par exemple : bien, pas bien, normal..."
+                  }
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="min-h-[120px] resize-none border-slate-700 bg-slate-900/80 placeholder:text-slate-500"
@@ -186,7 +178,7 @@ export default function PollClientPage() {
                 disabled={!selectedMood || submitVote.isPending}
               >
                 {submitVote.isPending ? (
-                  <div className="w-5 h-5 border-2 border-slate-800 border-t-transparent rounded-full animate-spin" />
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-800 border-t-transparent" />
                 ) : (
                   "Envoyer mon vote"
                 )}
