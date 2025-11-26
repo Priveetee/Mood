@@ -8,10 +8,7 @@ import { useEffect, useState } from "react";
 import TRPCProvider from "@/lib/trpc/provider";
 import { SilkProvider } from "./SilkContext";
 import AdminBackground from "@/components/background/admin-background";
-import {
-  initAdminSimpleMode,
-  setAdminSimpleMode,
-} from "@/lib/simple-mode";
+import { initAdminSimpleMode, setAdminSimpleMode } from "@/lib/simple-mode";
 
 const lightThemeColor = "#1a55e0";
 const darkThemeColor = "#29204b";
@@ -64,7 +61,9 @@ function TopBar() {
         <Switch
           id="theme-switch"
           checked={theme === "light"}
-          onCheckedChange={(isChecked) => setTheme(isChecked ? "light" : "dark")}
+          onCheckedChange={(isChecked) =>
+            setTheme(isChecked ? "light" : "dark")
+          }
         />
         <Sun className="h-6 w-6 text-slate-400" />
       </div>
@@ -86,7 +85,7 @@ export default function AdminLayout({
 
   return (
     <TRPCProvider>
-      <SilkProvider setSilkColor={setSilkColor}>
+      <SilkProvider setSilkColorAction={setSilkColor}>
         <AnimatedAdminBackground color={silkColor} />
         <TopBar />
         <div className="min-h-screen text-slate-50">{children}</div>

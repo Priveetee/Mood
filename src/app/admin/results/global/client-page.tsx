@@ -44,9 +44,11 @@ const getDateRangeFromPreset = (preset: DatePreset) => {
   }
 };
 
+type CampaignOption = { id: number; name: string };
+
 export default function GlobalResultsClient() {
   const searchParams = useSearchParams();
-  const { setSilkColor } = useSilk();
+  const { setSilkColorAction } = useSilk();
   const { theme } = useTheme();
 
   const [mounted, setMounted] = React.useState(false);
@@ -66,18 +68,18 @@ export default function GlobalResultsClient() {
   }, [theme]);
 
   const handleMoodHover = (color: string) => {
-    setSilkColor(color);
+    setSilkColorAction(color);
   };
 
   const handleMoodLeave = () => {
-    setSilkColor(defaultSilkColor);
+    setSilkColorAction(defaultSilkColor);
   };
 
   React.useEffect(() => {
     return () => {
-      setSilkColor(defaultSilkColor);
+      setSilkColorAction(defaultSilkColor);
     };
-  }, [defaultSilkColor, setSilkColor]);
+  }, [defaultSilkColor, setSilkColorAction]);
 
   React.useEffect(() => {
     const campaignIdParam = searchParams.get("campaignId");
@@ -134,6 +136,8 @@ export default function GlobalResultsClient() {
     },
   );
 
+  const campaignOptions = (campaignOptionsQuery.data || []) as CampaignOption[];
+
   const handleExportCSV = () => {
     if (!resultsQuery.data || resultsQuery.data.totalVotes === 0) {
       toast.error("Aucune donnée à exporter");
@@ -143,7 +147,7 @@ export default function GlobalResultsClient() {
     const campaignName =
       selectedCampaignId === "all"
         ? "toutes-campagnes"
-        : campaignOptionsQuery.data?.find((c) => c.id === selectedCampaignId)
+        : campaignOptions.find((campaign) => campaign.id === selectedCampaignId)
             ?.name || "campagne";
 
     try {
@@ -156,8 +160,8 @@ export default function GlobalResultsClient() {
 
   if (!mounted) {
     return (
-      <div className="p-8 flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex min-h-screen items-center justify-center p-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-transparent" />
       </div>
     );
   }
@@ -166,7 +170,7 @@ export default function GlobalResultsClient() {
     <div className="p-8">
       <Link
         href="/admin"
-        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 w-fit"
+        className="mb-8 flex w-fit items-center gap-2 text-slate-400 transition-colors hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour au Dashboard
@@ -176,21 +180,21 @@ export default function GlobalResultsClient() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <header className="mb-10 max-w-7xl mx-auto">
+        <header className="mx-auto mb-10 max-w-7xl">
           <h1 className="text-4xl font-bold">Résultats Globaux</h1>
-          <p className="text-slate-400 mt-2">
+          <p className="mt-2 text-slate-400">
             Analysez et filtrez les résultats de toutes les campagnes.
           </p>
         </header>
 
-        <main className="max-w-7xl mx-auto">
-          <div className="space-y-4 mb-8">
+        <main className="mx-auto max-w-7xl">
+          <div className="mb-8 space-y-4">
             <FilterBar
               selectedCampaignId={selectedCampaignId}
               setSelectedCampaignId={setSelectedCampaignId}
               selectedManager={selectedManager}
               setSelectedManager={setSelectedManager}
-              campaigns={campaignOptionsQuery.data || []}
+              campaigns={campaignOptions}
               managers={managerOptionsQuery.data || []}
               onExport={handleExportCSV}
               isExportDisabled={resultsQuery.isLoading || !resultsQuery.data}
@@ -205,7 +209,7 @@ export default function GlobalResultsClient() {
 
           {resultsQuery.isLoading ? (
             <div className="flex min-h-[400px] items-center justify-center">
-              <div className="w-8 h-8 border-4 border-slate-200 border-t-transparent rounded-full animate-spin"></div>
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-transparent" />
             </div>
           ) : !resultsQuery.data ? (
             <div className="p-8 text-center text-slate-400">
@@ -215,7 +219,7 @@ export default function GlobalResultsClient() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <MoodChart
                   data={resultsQuery.data.moodDistribution}
                   onMoodHover={handleMoodHover}

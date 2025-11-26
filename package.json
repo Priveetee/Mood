@@ -7,7 +7,7 @@
     "prebuild": "bunx prisma generate",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint . --max-warnings=10"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

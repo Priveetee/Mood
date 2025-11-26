@@ -1,10 +1,12 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 
 export type DatePreset = "7d" | "30d" | "3m" | "year" | "all";
 
 interface DatePresetBarProps {
   selectedPreset: DatePreset;
-  onPresetChange: (preset: DatePreset) => void;
+  onPresetChange: (_preset: DatePreset) => void;
 }
 
 export function DatePresetBar({
@@ -20,8 +22,8 @@ export function DatePresetBar({
   ];
 
   return (
-    <div className="flex items-center gap-2 p-4 rounded-lg bg-slate-900 border border-slate-800">
-      <span className="text-sm text-slate-400 mr-2">Période :</span>
+    <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900 p-4">
+      <span className="mr-2 text-sm text-slate-400">Période :</span>
       {presets.map((preset) => (
         <Button
           key={preset.value}
@@ -31,7 +33,7 @@ export function DatePresetBar({
           className={
             selectedPreset === preset.value
               ? "bg-slate-200 text-slate-900 hover:bg-slate-300"
-              : "bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
+              : "border-slate-700 bg-slate-800 text-white hover:bg-slate-700"
           }
         >
           {preset.label}

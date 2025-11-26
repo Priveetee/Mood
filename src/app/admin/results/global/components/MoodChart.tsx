@@ -1,3 +1,5 @@
+"use client";
+
 import { Pie, PieChart, Cell } from "recharts";
 import {
   Card,
@@ -23,7 +25,7 @@ interface MoodData {
 
 interface MoodChartProps {
   data: MoodData[];
-  onMoodHover: (color: string) => void;
+  onMoodHover: (_color: string) => void;
   onMoodLeave: () => void;
 }
 
@@ -36,6 +38,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 const RADIAN = Math.PI / 180;
+
 const CustomizedLabel = ({
   cx,
   cy,
@@ -68,10 +71,10 @@ const CustomizedLabel = ({
 };
 
 export function MoodChart({ data, onMoodHover, onMoodLeave }: MoodChartProps) {
-  const filteredData = data.filter((m) => m.votes > 0);
+  const filteredData = data.filter((item) => item.votes > 0);
 
   return (
-    <Card className="flex flex-col bg-slate-900 border-slate-800 text-white">
+    <Card className="flex flex-col border-slate-800 bg-slate-900 text-white">
       <CardHeader className="items-center pb-0">
         <CardTitle>Répartition des Humeurs</CardTitle>
         <CardDescription>Période sélectionnée</CardDescription>
@@ -95,21 +98,21 @@ export function MoodChart({ data, onMoodHover, onMoodLeave }: MoodChartProps) {
               strokeWidth={5}
               labelLine={false}
               label={CustomizedLabel}
-              onMouseEnter={(data: MoodData) => onMoodHover(data.fill)}
+              onMouseEnter={(item: MoodData) => onMoodHover(item.fill)}
               onMouseLeave={onMoodLeave}
             >
-              {filteredData.map((entry, index) => (
+              {filteredData.map((item, index) => (
                 <Cell
-                  key={`cell-${entry.name}-${index}`}
-                  fill={entry.fill}
-                  stroke={entry.fill}
+                  key={`cell-${item.name}-${index}`}
+                  fill={item.fill}
+                  stroke={item.fill}
                 />
               ))}
             </Pie>
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm"></CardFooter>
+      <CardFooter className="flex-col gap-2 text-sm" />
     </Card>
   );
 }

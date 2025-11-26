@@ -3,20 +3,20 @@
 import { createContext, useContext, ReactNode } from "react";
 
 interface SilkContextType {
-  setSilkColor: (color: string) => void;
+  setSilkColorAction: (_color: string) => void;
 }
 
 const SilkContext = createContext<SilkContextType | undefined>(undefined);
 
 export function SilkProvider({
-  setSilkColor,
+  setSilkColorAction,
   children,
 }: {
-  setSilkColor: (color: string) => void;
+  setSilkColorAction: (_color: string) => void;
   children: ReactNode;
 }) {
   return (
-    <SilkContext.Provider value={{ setSilkColor }}>
+    <SilkContext.Provider value={{ setSilkColorAction }}>
       {children}
     </SilkContext.Provider>
   );
