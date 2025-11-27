@@ -9,6 +9,7 @@ import TRPCProvider from "@/lib/trpc/provider";
 import { SilkProvider } from "./SilkContext";
 import AdminBackground from "@/components/background/admin-background";
 import { initAdminSimpleMode, setAdminSimpleMode } from "@/lib/simple-mode";
+import { PerfModeProvider, usePerfMode } from "@/perf/context";
 
 const lightThemeColor = "#1a55e0";
 const darkThemeColor = "#29204b";
@@ -31,19 +32,21 @@ function AnimatedAdminBackground({ color }: { color: string }) {
 
 function TopBar() {
   const { theme, setTheme } = useTheme();
-  const [simpleMode, setSimpleModeState] = useState(false);
+  const { mode, setMode } = usePerfMode();
+  const [simpleBg, setSimpleBg] = useState(false);
 
   useEffect(() => {
     const initial = initAdminSimpleMode();
-    setSimpleModeState(initial);
+    setSimpleBg(initial);
   }, []);
 
   const handleSimpleToggle = (value: boolean) => {
-    setSimpleModeState(value);
+    setSimpleBg(value);
     setAdminSimpleMode(value);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("mood-admin-simple-bg-change"));
     }
+    setMode(value ? "low" : "normal");
   };
 
   return (
@@ -52,7 +55,7 @@ function TopBar() {
         <Cpu className="h-5 w-5 text-slate-400" />
         <Switch
           id="simple-mode-switch"
-          checked={simpleMode}
+          checked={simpleBg || mode === "low"}
           onCheckedChange={handleSimpleToggle}
         />
       </div>
@@ -71,11 +74,7 @@ function TopBar() {
   );
 }
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const [silkColor, setSilkColor] = useState(darkThemeColor);
 
@@ -91,5 +90,17 @@ export default function AdminLayout({
         <div className="min-h-screen text-slate-50">{children}</div>
       </SilkProvider>
     </TRPCProvider>
+  );
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <PerfModeProvider>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </PerfModeProvider>
   );
 }

@@ -34,7 +34,7 @@ export function FilterBar({
   totalVotes,
 }: FilterBarProps) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-800 bg-slate-900 p-4">
+    <div className="flex items-center justy-between gap-4 rounded-lg border border-slate-800 bg-slate-900 p-4">
       <div className="flex items-center gap-4">
         <Select
           value={selectedCampaignId.toString()}

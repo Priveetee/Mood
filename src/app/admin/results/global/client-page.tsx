@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
@@ -15,6 +14,7 @@ import { DatePresetBar, DatePreset } from "./components/DatePresetBar";
 import { MoodChart } from "./components/MoodChart";
 import { CommentsList } from "./components/CommentsList";
 import { StatsCards } from "./components/StatsCards";
+import { PerfMotion } from "@/perf/motion";
 
 const lightThemeColor = "#1a55e0";
 const darkThemeColor = "#29204b";
@@ -175,7 +175,7 @@ export default function GlobalResultsClient() {
         <ArrowLeft className="h-4 w-4" />
         Retour au Dashboard
       </Link>
-      <motion.div
+      <PerfMotion
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -244,7 +244,7 @@ export default function GlobalResultsClient() {
             </>
           )}
         </main>
-      </motion.div>
+      </PerfMotion>
     </div>
   );
 }

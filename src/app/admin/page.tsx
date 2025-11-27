@@ -7,6 +7,7 @@ import { PlusCircle, List, BarChart3, Github, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { signOut } from "@/lib/auth-client";
+import { usePerfMode } from "@/perf/context";
 
 const dashboardItems = [
   {
@@ -41,8 +42,11 @@ const dashboardItems = [
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { effectiveMode } = usePerfMode();
+  const lowPerf = effectiveMode === "low";
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (lowPerf) return;
     const cards = document.getElementsByClassName("card--border-glow");
     for (const card of Array.from(cards)) {
       const rect = (card as HTMLElement).getBoundingClientRect();
@@ -60,9 +64,7 @@ export default function AdminDashboard() {
       router.push("/login");
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Échec de la déconnexion.",
+        error instanceof Error ? error.message : "Échec de la déconnexion.",
       );
     }
   };
@@ -72,19 +74,19 @@ export default function AdminDashboard() {
       className="flex min-h-screen flex-col items-center justify-center p-8"
       onMouseMove={onMouseMove}
     >
-      <header className="text-center mb-12 relative w-full max-w-6xl">
+      <header className="relative mb-12 w-full max-w-6xl text-center">
         <h1 className="text-5xl font-bold tracking-tight">
           Dashboard Administrateur
         </h1>
-        <p className="text-slate-400 mt-2">
+        <p className="mt-2 text-slate-400">
           Gérez vos campagnes et analysez les résultats.
         </p>
         <Button
           onClick={handleLogout}
           variant="ghost"
-          className="absolute top-0 right-0 text-slate-400 hover:text-white"
+          className="absolute right-0 top-0 text-slate-400 hover:text-white"
         >
-          <LogOut className="h-5 w-5 mr-2" /> Se déconnecter
+          <LogOut className="mr-2 h-5 w-5" /> Se déconnecter
         </Button>
       </header>
 
@@ -97,7 +99,7 @@ export default function AdminDashboard() {
                 <h3 className="text-2xl font-semibold text-white">
                   {item.title}
                 </h3>
-                <p className="text-slate-400 mt-1">{item.description}</p>
+                <p className="mt-1 text-slate-400">{item.description}</p>
               </BentoCard>
             </Link>
           ))}

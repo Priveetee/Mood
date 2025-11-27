@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
@@ -43,6 +42,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { PerfMotion } from "@/perf/motion";
 
 interface Campaign {
   id: number;
@@ -97,7 +97,9 @@ export default function ActiveCampaignsPage() {
       setNewManagerName("");
       setIsAddManagerOpen(false);
       utils.campaign.list.invalidate();
-      utils.campaign.getLinks.invalidate(selectedCampaignId!);
+      if (selectedCampaignId) {
+        utils.campaign.getLinks.invalidate(selectedCampaignId);
+      }
     },
     onError: (error) => {
       toast.error(error.message || "Échec de l'ajout du manager.");
@@ -187,7 +189,7 @@ export default function ActiveCampaignsPage() {
   if (campaignsQuery.isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-transparent rounded-full animate-spin"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-transparent" />
       </div>
     );
   }
@@ -196,23 +198,23 @@ export default function ActiveCampaignsPage() {
     <div className="p-8">
       <Link
         href="/admin"
-        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-8 w-fit"
+        className="mb-8 flex w-fit items-center gap-2 text-slate-400 transition-colors hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour au Dashboard
       </Link>
 
-      <motion.div
+      <PerfMotion
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <header className="mb-10 max-w-7xl mx-auto flex items-center justify-between">
+        <header className="mx-auto mb-10 flex max-w-7xl items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-white">
               Gestion des Campagnes
             </h1>
-            <p className="text-slate-400 mt-2">
+            <p className="mt-2 text-slate-400">
               Suivez et gérez vos campagnes de sondage.
             </p>
           </div>
@@ -228,8 +230,8 @@ export default function ActiveCampaignsPage() {
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl">
+        <main className="mx-auto max-w-7xl">
+          <div className="rounded-xl border border-slate-800 bg-slate-900">
             {displayedCampaigns.length === 0 ? (
               <div className="p-8 text-center text-slate-400">
                 {showArchived ? (
@@ -239,7 +241,7 @@ export default function ActiveCampaignsPage() {
                     Aucune campagne active.{" "}
                     <Link
                       href="/admin/campaigns/new"
-                      className="text-white hover:underline font-semibold"
+                      className="font-semibold text-white hover:underline"
                     >
                       Créez-en une !
                     </Link>
@@ -251,14 +253,14 @@ export default function ActiveCampaignsPage() {
                 <TableHeader>
                   <TableRow className="border-slate-800 hover:bg-transparent">
                     <TableHead className="text-white">Nom</TableHead>
-                    <TableHead className="text-white text-center">
+                    <TableHead className="text-center text-white">
                       Liens
                     </TableHead>
-                    <TableHead className="text-white text-center">
+                    <TableHead className="text-center text-white">
                       Votes
                     </TableHead>
                     <TableHead className="text-white">Date</TableHead>
-                    <TableHead className="text-white w-[200px]">
+                    <TableHead className="w-[200px] text-white">
                       Participation
                     </TableHead>
                     <TableHead className="text-right text-white">
@@ -288,7 +290,7 @@ export default function ActiveCampaignsPage() {
                         <div className="flex items-center gap-3">
                           <Progress
                             value={campaign.participationRate}
-                            className="bg-slate-700 h-2"
+                            className="h-2 bg-slate-700"
                           />
                           <span className="text-sm text-slate-400">
                             {campaign.participationRate}%
@@ -308,7 +310,7 @@ export default function ActiveCampaignsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="bg-slate-900 border-slate-800 text-slate-200"
+                            className="border-slate-800 bg-slate-900 text-slate-200"
                           >
                             <DropdownMenuItem
                               onClick={() => openLinksDialog(campaign)}
@@ -350,10 +352,10 @@ export default function ActiveCampaignsPage() {
             )}
           </div>
         </main>
-      </motion.div>
+      </PerfMotion>
 
       <Dialog open={isLinksDialogOpen} onOpenChange={setIsLinksDialogOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
+        <DialogContent className="max-w-2xl border-slate-800 bg-slate-900 text-white">
           <DialogHeader className="flex-row items-center justify-between pr-6">
             <div className="space-y-1">
               <DialogTitle className="text-white">
@@ -390,11 +392,11 @@ export default function ActiveCampaignsPage() {
                   key={link.id}
                   className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 p-3"
                 >
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-slate-200">
                       {link.managerName}
                     </p>
-                    <p className="text-xs text-slate-400 truncate">
+                    <p className="truncate text-xs text-slate-400">
                       {link.url}
                     </p>
                   </div>
@@ -409,7 +411,7 @@ export default function ActiveCampaignsPage() {
               ))}
             </div>
           </ScrollArea>
-          <div className="flex justify-end mt-4">
+          <div className="mt-4 flex justify-end">
             <Button className="gap-2" onClick={openAddManagerDialog}>
               <Plus className="h-4 w-4" />
               Ajouter un manager
@@ -425,7 +427,7 @@ export default function ActiveCampaignsPage() {
           if (!open) setIsLinksDialogOpen(true);
         }}
       >
-        <DialogContent className="bg-slate-900 border-slate-800 text-white">
+        <DialogContent className="border-slate-800 bg-slate-900 text-white">
           <DialogHeader>
             <DialogTitle className="text-white">
               Ajouter un manager à {selectedCampaignName}
@@ -439,7 +441,7 @@ export default function ActiveCampaignsPage() {
               value={newManagerName}
               onChange={(e) => setNewManagerName(e.target.value)}
               placeholder="Nom du manager"
-              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+              className="border-slate-700 bg-slate-800 text-white placeholder:text-slate-500"
               onKeyDown={(e) => e.key === "Enter" && handleAddManager()}
             />
             <div className="flex justify-end">
