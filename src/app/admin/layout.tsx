@@ -36,9 +36,12 @@ function TopBar() {
   const [simpleBg, setSimpleBg] = useState(false);
 
   useEffect(() => {
-    const initial = initAdminSimpleMode();
-    setSimpleBg(initial);
-  }, []);
+    const initialBg = initAdminSimpleMode();
+    setSimpleBg(initialBg);
+    if (initialBg) {
+      setMode("low");
+    }
+  }, [setMode]);
 
   const handleSimpleToggle = (value: boolean) => {
     setSimpleBg(value);
@@ -49,13 +52,15 @@ function TopBar() {
     setMode(value ? "low" : "normal");
   };
 
+  const cpuChecked = simpleBg || mode === "low";
+
   return (
     <div className="absolute top-8 right-8 flex items-center space-x-6">
       <div className="flex items-center space-x-2">
         <Cpu className="h-5 w-5 text-slate-400" />
         <Switch
           id="simple-mode-switch"
-          checked={simpleBg || mode === "low"}
+          checked={cpuChecked}
           onCheckedChange={handleSimpleToggle}
         />
       </div>

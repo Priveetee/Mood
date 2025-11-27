@@ -23,11 +23,10 @@ export function computeEffectiveMode(mode: PerfMode): EffectivePerfMode {
   if (mode === "low") return "low";
 
   if (typeof navigator !== "undefined") {
+    const nav = navigator as Navigator & { hardwareConcurrency?: number };
     const hc =
-      typeof (navigator as Navigator & { hardwareConcurrency?: number })
-        .hardwareConcurrency === "number"
-        ? (navigator as Navigator & { hardwareConcurrency?: number })
-            .hardwareConcurrency
+      typeof nav.hardwareConcurrency === "number"
+        ? nav.hardwareConcurrency
         : undefined;
 
     if (hc !== undefined && hc <= 4) {
