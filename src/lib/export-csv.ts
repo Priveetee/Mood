@@ -9,9 +9,12 @@ interface VoteData {
   comment?: string;
 }
 
+const SEP = ";";
+
 function escapeCsvField(value: string): string {
   const v = value ?? "";
-  const needsQuote = /[",\n\r]/.test(v);
+  if (v === "") return "";
+  const needsQuote = /["\n\r]/.test(v);
   const escaped = v.replace(/"/g, '""');
   return needsQuote ? `"${escaped}"` : escaped;
 }
@@ -44,18 +47,21 @@ export const exportToCSV = (votes: VoteData[], campaignName: string) => {
               ? "Pas bien"
               : "Inconnu";
 
+    const rawComment = vote.comment || "Sans commentaire";
+    const safeComment = rawComment.replace(/,/g, "\\");
+
     rows.push([
       vote.date || "",
       vote.campaign || "",
       vote.manager || "",
       vote.user || "Anonyme",
       moodLabel,
-      vote.comment || "Sans commentaire",
+      safeComment,
     ]);
   });
 
   const csvContent = rows
-    .map((row) => row.map(escapeCsvField).join(","))
+    .map((row) => row.map(escapeCsvField).join(SEP))
     .join("\n");
 
   const BOM = "\uFEFF";
