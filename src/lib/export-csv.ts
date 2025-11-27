@@ -9,14 +9,21 @@ interface VoteData {
   comment?: string;
 }
 
+function escapeCsvField(value: string): string {
+  const v = value ?? "";
+  const needsQuote = /[",\n\r]/.test(v);
+  const escaped = v.replace(/"/g, '""');
+  return needsQuote ? `"${escaped}"` : escaped;
+}
+
 export const exportToCSV = (votes: VoteData[], campaignName: string) => {
   if (votes.length === 0) {
     throw new Error("Aucune donnée à exporter");
   }
 
-  const csvRows = [];
+  const rows: string[][] = [];
 
-  csvRows.push([
+  rows.push([
     "Date",
     "Campagne",
     "Manager",
@@ -37,17 +44,20 @@ export const exportToCSV = (votes: VoteData[], campaignName: string) => {
               ? "Pas bien"
               : "Inconnu";
 
-    csvRows.push([
+    rows.push([
       vote.date || "",
       vote.campaign || "",
       vote.manager || "",
       vote.user || "Anonyme",
       moodLabel,
-      `"${(vote.comment || "Sans commentaire").replace(/"/g, '""')}"`,
+      vote.comment || "Sans commentaire",
     ]);
   });
 
-  const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+  const csvContent = rows
+    .map((row) => row.map(escapeCsvField).join(","))
+    .join("\n");
+
   const BOM = "\uFEFF";
   const blob = new Blob([BOM + csvContent], {
     type: "text/csv;charset=utf-8;",
