@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
 import { Sun, Moon, Cpu } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import TRPCProvider from "@/lib/trpc/provider";
 import { SilkProvider } from "./SilkContext";
 import AdminBackground from "@/components/background/admin-background";
@@ -92,7 +92,17 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       <SilkProvider setSilkColorAction={setSilkColor}>
         <AnimatedAdminBackground color={silkColor} />
         <TopBar />
-        <div className="min-h-screen text-slate-50">{children}</div>
+        <div className="min-h-screen text-slate-50">
+          <Suspense
+            fallback={
+              <div className="flex min-h-screen items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-transparent" />
+              </div>
+            }
+          >
+            {children}
+          </Suspense>
+        </div>
       </SilkProvider>
     </TRPCProvider>
   );
