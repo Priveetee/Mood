@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import PollSilk from "@/components/PollSilk";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,14 @@ const moods = [
 const DEFAULT_SILK_COLOR = "#1a1a2e";
 const TRANSITION_DELAY = 1100;
 
-export default function PollClientPage() {
-  const params = useParams();
+export default function PollClientPage({
+  params,
+}: {
+  params: Promise<{ link: string }>;
+}) {
+  const { link } = use(params);
   const router = useRouter();
-  const pollToken = params.link as string;
+  const pollToken = link;
 
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [comment, setComment] = useState("");

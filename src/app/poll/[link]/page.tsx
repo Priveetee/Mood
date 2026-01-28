@@ -1,5 +1,9 @@
 import PollClientPage from "./client-page";
 
-export default function PollPage() {
-  return <PollClientPage />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ link: string }>;
+}) {
+  return <PollClientPage params={params} />;
 }

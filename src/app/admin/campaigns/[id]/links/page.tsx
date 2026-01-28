@@ -1,14 +1,15 @@
-"use client"
+"use client";
 
-import { useParams, useRouter } from "next/navigation"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { toast } from "sonner"
-import { ArrowLeft, Copy, Send } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { trpc } from "@/lib/trpc/client"
+import { use } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { ArrowLeft, Copy, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { trpc } from "@/lib/trpc/client";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -16,38 +17,42 @@ const containerVariants = {
     opacity: 1,
     transition: { staggerChildren: 0.05 },
   },
-}
+};
 
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
   visible: { y: 0, opacity: 1 },
   exit: { scale: 0.9, opacity: 0 },
-}
+};
 
-export default function CampaignLinksPage() {
-  const params = useParams()
-  const router = useRouter()
-  const campaignId = Number(params.id)
+export default function CampaignLinksPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const router = useRouter();
+  const campaignId = Number(id);
 
-  const campaignQuery = trpc.campaign.list.useQuery()
+  const campaignQuery = trpc.campaign.list.useQuery();
   const linksQuery = trpc.campaign.getLinks.useQuery(campaignId, {
     enabled: !Number.isNaN(campaignId),
-  })
+  });
 
   const copyToClipboard = (text: string, message: string) => {
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        toast.success(message)
+        toast.success(message);
       })
       .catch(() => {
-        toast.error("Impossible de copier dans le presse-papiers.")
-      })
-  }
+        toast.error("Impossible de copier dans le presse-papiers.");
+      });
+  };
 
   if (Number.isNaN(campaignId)) {
-    router.replace("/admin/campaigns/active")
-    return null
+    router.replace("/admin/campaigns/active");
+    return null;
   }
 
   if (linksQuery.isLoading || campaignQuery.isLoading) {
@@ -55,43 +60,42 @@ export default function CampaignLinksPage() {
       <div className="flex min-h-screen items-center justify-center p-8">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-transparent" />
       </div>
-    )
+    );
   }
 
   if (linksQuery.isError) {
-    toast.error(linksQuery.error.message)
-    router.replace("/admin/campaigns/active")
-    return null
+    toast.error(linksQuery.error.message);
+    router.replace("/admin/campaigns/active");
+    return null;
   }
 
   const campaignName =
-    campaignQuery.data?.find((c) => c.id === campaignId)?.name ||
-    "Campagne"
+    campaignQuery.data?.find((c) => c.id === campaignId)?.name || "Campagne";
 
   const generatedLinks =
     linksQuery.data?.map((link) => ({
       managerName: link.managerName,
       url: link.url,
-    })) || []
+    })) || [];
 
   const handleCopyAll = () => {
     const allLinks = generatedLinks
       .map((link) => `${link.managerName}: ${link.url}`)
-      .join("\n")
-    copyToClipboard(allLinks, "Tous les liens ont été copiés !")
-  }
+      .join("\n");
+    copyToClipboard(allLinks, "Tous les liens ont été copiés !");
+  };
 
   const handleSendEmail = () => {
     const allLinks = generatedLinks
       .map((link) => `${link.managerName}: ${link.url}`)
-      .join("\n")
-    const subject = `Liens pour la campagne de sondage: ${campaignName}`
-    const body = `Bonjour,\n\nVoici les liens de sondage pour vos équipes respectives :\n\n${allLinks}\n\nCordialement.`
+      .join("\n");
+    const subject = `Liens pour la campagne de sondage: ${campaignName}`;
+    const body = `Bonjour,\n\nVoici les liens de sondage pour vos équipes respectives :\n\n${allLinks}\n\nCordialement.`;
     window.location.href = `mailto:?subject=${encodeURIComponent(
       subject,
-    )}&body=${encodeURIComponent(body)}`
-    toast.info("Ouverture de votre client de messagerie...")
-  }
+    )}&body=${encodeURIComponent(body)}`;
+    toast.info("Ouverture de votre client de messagerie...");
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-8">
@@ -181,5 +185,5 @@ export default function CampaignLinksPage() {
         </motion.div>
       </div>
     </div>
-  )
+  );
 }
