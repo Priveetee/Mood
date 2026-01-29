@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { headers } from "next/headers";
 
 const handler = async (req: Request) => {
+  console.log(`[AUTH TRPC] ${req.method} ${req.url}`);
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -13,7 +14,16 @@ const handler = async (req: Request) => {
     endpoint: "/api/trpc",
     req,
     router: appRouter,
-    createContext: () => createContext({ req, session }),
+    createContext: async () => {
+      const ctx = await createContext({ req, session });
+      console.log(
+        `[AUTH TRPC] Context created for user: ${session?.user?.email || "anonymous"}`,
+      );
+      return ctx;
+    },
+    onError: ({ error, path }) => {
+      console.error(`[AUTH TRPC ERROR] path: ${path}, error:`, error);
+    },
   });
 };
 
