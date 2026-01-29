@@ -7,7 +7,7 @@ interface CreateContextOptions {
   session?: typeof auth.$Infer.Session | null;
 }
 
-export async function createContext({ req, session }: CreateContextOptions) {
+export async function createContext({ _req, session }: CreateContextOptions) {
   const finalSession =
     session !== undefined
       ? session
