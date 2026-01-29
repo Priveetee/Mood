@@ -24,6 +24,7 @@ export function PerfModeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initial = loadPerfMode();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setModeState(initial);
     setEffectiveMode(computeEffectiveMode(initial));
   }, []);

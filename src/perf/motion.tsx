@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/static-components */
+
 import React from "react";
 import { motion, MotionProps } from "framer-motion";
 import { usePerfMode } from "./context";

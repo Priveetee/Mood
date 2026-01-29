@@ -12,6 +12,7 @@ export default function AdminBackground({ color }: AdminBackgroundProps) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSimple(window.__moodAdminSimpleBg === true);
     const handler = () => {
       setSimple(window.__moodAdminSimpleBg === true);

@@ -37,6 +37,7 @@ function TopBar() {
 
   useEffect(() => {
     const initialBg = initAdminSimpleMode();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSimpleBg(initialBg);
     if (initialBg) {
       setMode("low");
@@ -84,6 +85,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [silkColor, setSilkColor] = useState(darkThemeColor);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSilkColor(theme === "light" ? lightThemeColor : darkThemeColor);
   }, [theme]);
 
