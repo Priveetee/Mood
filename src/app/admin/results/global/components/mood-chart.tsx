@@ -1,6 +1,6 @@
 "use client";
 
-import { Pie, PieChart, Cell } from "recharts";
+import { Cell, Pie, PieChart, type PieLabelRenderProps, type PieSectorDataItem } from "recharts";
 import {
   Card,
   CardContent,
@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  ChartConfig,
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -39,22 +39,42 @@ const chartConfig = {
 
 const RADIAN = Math.PI / 180;
 
-const CustomizedLabel = ({
-  cx,
-  cy,
-  midAngle,
-  outerRadius,
-  payload,
-}: {
-  cx: number;
-  cy: number;
-  midAngle: number;
-  outerRadius: number;
-  payload: { emoji: string };
-}) => {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function getEmojiFromPayload(payload: unknown): string {
+  if (!isRecord(payload)) {
+    return "";
+  }
+  const emoji = payload.emoji;
+  return typeof emoji === "string" ? emoji : "";
+}
+
+function getFillColor(item: PieSectorDataItem): string | null {
+  if (typeof item.fill === "string") {
+    return item.fill;
+  }
+  if (isRecord(item.payload) && typeof item.payload.fill === "string") {
+    return item.payload.fill;
+  }
+  return null;
+}
+
+const CustomizedLabel = ({ cx, cy, midAngle, outerRadius, payload }: PieLabelRenderProps) => {
+  if (
+    typeof cx !== "number" ||
+    typeof cy !== "number" ||
+    typeof midAngle !== "number" ||
+    typeof outerRadius !== "number"
+  ) {
+    return null;
+  }
+
   const radius = outerRadius + 25;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const emoji = getEmojiFromPayload(payload);
 
   return (
     <text
@@ -65,7 +85,7 @@ const CustomizedLabel = ({
       dominantBaseline="central"
       className="text-2xl"
     >
-      {payload.emoji}
+      {emoji}
     </text>
   );
 };
@@ -82,12 +102,19 @@ export function MoodChart({ data, onMoodHover, onMoodLeave }: MoodChartProps) {
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[350px]"
+          className="mx-auto aspect-square max-h-[280px] sm:max-h-[350px]"
         >
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={
+                <ChartTooltipContent
+                  hideLabel
+                  payload={[]}
+                  active={false}
+                  accessibilityLayer={false}
+                />
+              }
             />
             <Pie
               data={filteredData}
@@ -98,14 +125,20 @@ export function MoodChart({ data, onMoodHover, onMoodLeave }: MoodChartProps) {
               strokeWidth={5}
               labelLine={false}
               label={CustomizedLabel}
-              onMouseEnter={(item: MoodData) => onMoodHover(item.fill)}
+              onMouseEnter={(item: PieSectorDataItem) => {
+                const fill = getFillColor(item);
+                if (fill) {
+                  onMoodHover(fill);
+                }
+              }}
               onMouseLeave={onMoodLeave}
             >
-              {filteredData.map((item, index) => (
+              {filteredData.map((item) => (
                 <Cell
-                  key={`cell-${item.name}-${index}`}
+                  key={`cell-${item.name}`}
                   fill={item.fill}
                   stroke={item.fill}
+                  style={{ transition: "fill 420ms ease, stroke 420ms ease" }}
                 />
               ))}
             </Pie>
