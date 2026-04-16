@@ -1,7 +1,7 @@
-import Link from "next/link";
+import { BookOpen, CodeXml } from "lucide-react";
 import Image from "next/image";
-import { Github, BookOpen } from "lucide-react";
-import Silk from "@/components/Silk";
+import Link from "next/link";
+import Silk from "@/components/silk";
 
 export default function HomePage() {
   return (
@@ -22,8 +22,7 @@ export default function HomePage() {
             Bienvenue sur Mood
           </h1>
           <p className="mt-4 max-w-lg text-xl text-slate-200 drop-shadow-lg">
-            Rien à voir ici pour l&apos;instant... ou peut être le code ou la
-            documentation ?
+            Rien à voir ici pour l&apos;instant... ou peut être le code ou la documentation ?
           </p>
 
           <div className="mt-10 flex items-center gap-6">
@@ -34,7 +33,7 @@ export default function HomePage() {
               aria-label="Voir le code source sur GitHub"
               className="rounded-full bg-black/40 p-4 text-white transition-transform hover:scale-110"
             >
-              <Github className="h-8 w-8" />
+              <CodeXml className="h-8 w-8" />
             </Link>
             <Link
               href="https://priveetee.github.io/Docs_Mood/"

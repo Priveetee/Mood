@@ -1,5 +1,5 @@
-import Silk from "@/components/Silk";
-import LoginForm from "@/components/auth/LoginForm";
+import LoginForm from "@/components/auth/login-form";
+import Silk from "@/components/silk";
 
 export default function LoginPage() {
   return (
