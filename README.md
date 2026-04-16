@@ -35,6 +35,26 @@ This section describes how to deploy the application in a production environment
 -   [Docker](https://www.docker.com/get-started)
 -   [Docker Compose](https://docs.docker.com/compose/install/)
 
+### Quick Start: One-line install and deploy
+
+Works from a clean machine: it clones the repo, prepares `.env` from `.env.example` when missing, applies optional overrides, then runs the production deploy script.
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh)
+```
+
+When passing options to the one-liner, keep the `--` separator:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh) -- --dir ~/mood-prod --project-name mood-prod --web-port 3010 --db-port 5460
+```
+
+Download or update sources without deploying:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh) -- --dir ~/mood-prod --download-only
+```
+
 ### 1. Clone the Repository
 
 ```bash
@@ -99,26 +119,6 @@ Useful flags:
 bash scripts/deploy-prod.sh --skip-backup
 bash scripts/deploy-prod.sh --skip-pull
 bash scripts/deploy-prod.sh --ref main --remote origin
-```
-
-### One-line install and deploy
-
-Works from a clean machine: it clones the repo, prepares `.env` from `.env.example` when missing, applies optional overrides, then runs the production deploy script.
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh)
-```
-
-When passing options to the one-liner, keep the `--` separator:
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh) -- --dir ~/mood-prod --project-name mood-prod --web-port 3010 --db-port 5460
-```
-
-Download or update sources without deploying:
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh) -- --dir ~/mood-prod --download-only
 ```
 
 Services started by default:
