@@ -8,14 +8,10 @@ export const loginSchema = z.object({
 export const registerSchema = z
   .object({
     email: z.string().email({ message: "Adresse email invalide" }),
-    name: z
-      .string()
-      .min(3, { message: "Le nom doit faire au moins 3 caractères" }),
-    password: z
-      .string()
-      .min(8, { message: "Le mot de passe doit faire au moins 8 caractères" }),
+    name: z.string().min(3, { message: "Le nom doit faire au moins 3 caractères" }),
+    password: z.string().min(8, { message: "Le mot de passe doit faire au moins 8 caractères" }),
     confirmPassword: z.string(),
-    invitationKey: z.string().optional(),
+    invitationKey: z.string().min(1, { message: "La cle d'invitation est requise" }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Les mots de passe ne correspondent pas",

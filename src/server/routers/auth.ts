@@ -1,5 +1,5 @@
-import { procedure, router } from "../trpc";
 import prisma from "@/lib/prisma";
+import { procedure, router } from "../trpc";
 
 export const authRouter = router({
   canRegister: procedure.query(async () => {
