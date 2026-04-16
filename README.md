@@ -79,6 +79,30 @@ This command will build the Docker images and start all services in the backgrou
 docker compose up --build -d
 ```
 
+### Automated production deploy script
+
+```bash
+bash scripts/deploy-prod.sh
+```
+
+With local uncommitted changes on server:
+
+```bash
+bash scripts/deploy-prod.sh --stash-dirty
+```
+
+### One-line install and deploy
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh)
+```
+
+Isolated install example:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh) -- --dir ~/mood-prod --project-name mood-prod --web-port 3010 --db-port 5460
+```
+
 Services started by default:
 
 - PostgreSQL
