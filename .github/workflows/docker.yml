@@ -1,0 +1,80 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare CI env file
+        run: |
+          cat > .env <<'ENVFILE'
+          COMPOSE_PROJECT_NAME="mood"
+          POSTGRES_USER="mood_user"
+          POSTGRES_PASSWORD="ci-password"
+          POSTGRES_DB="mood_db"
+          POSTGRES_PORT=5450
+          DATABASE_URL="postgresql://mood_user:ci-password@postgres:5432/mood_db"
+          JWT_SECRET="ci-jwt-secret"
+          JWT_EXPIRES_IN="1d"
+          INVITATION_KEY="ci-invitation-key"
+          BETTER_AUTH_SECRET="ci-auth-secret"
+          BETTER_AUTH_URL="http://localhost:3000"
+          DRAGONFLY_URL="redis://dragonfly:6379"
+          NEXT_PUBLIC_APP_URL="http://localhost:3000"
+          ENVFILE
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-beta,enable=${{ github.ref_name == 'main' || github.ref_name == 'dev' || startsWith(github.ref, 'refs/tags/v') }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref_name == 'dev' }}
+            type=raw,value=beta,enable=${{ github.ref_name == 'dev' }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
