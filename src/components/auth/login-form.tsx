@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useAuthForms } from "./use-auth-forms";
 export default function LoginForm() {
   const [activeTab, setActiveTab] = useState<FormType>("login");
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
   const { data, isError } = publicTrpc.auth.canRegister.useQuery(undefined, {
     staleTime: 60_000,
     gcTime: 600_000,
@@ -25,6 +27,13 @@ export default function LoginForm() {
   const canRegister = data?.canRegister ?? false;
   const { loginForm, registerForm } = useAuthForms();
   const { onLogin, onRegister } = useAuthActions();
+
+  useEffect(() => {
+    const authError = searchParams.get("auth_error");
+    if (authError === "unauthorized") {
+      toast.error("Session expirée. Merci de vous reconnecter.");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (isError) {
