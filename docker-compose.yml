@@ -1,42 +1,58 @@
+name: ${COMPOSE_PROJECT_NAME:-mood}
+
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: mood_postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_PORT:-5450}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d
     networks:
       - mood_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    ulimits:
+      memlock: -1
+    networks:
+      - mood_network
+    restart: unless-stopped
 
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: mood_web_prod
+    restart: unless-stopped
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      POSTGRES_USER: ${POSTGRES_USER}
-      AUTH_SECRET: ${AUTH_SECRET}
-      INVITATION_KEY: ${INVITATION_KEY}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      EXPECTED_DATABASE_NAME: ${EXPECTED_DATABASE_NAME:-${POSTGRES_DB}}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      INVITATION_KEY: ${INVITATION_KEY:?INVITATION_KEY is required}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3001}
+      DRAGONFLY_URL: ${DRAGONFLY_URL:-redis://dragonfly:6379}
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3001}:3000"
     networks:
       - mood_network
     depends_on:
       postgres:
         condition: service_healthy
+      dragonfly:
+        condition: service_started
 
 volumes:
   postgres_data:
