@@ -1,30 +1,35 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useEffect } from "react";
 import { ShieldX } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const FaultyTerminal = dynamic(() => import("@/components/FaultyTerminal"), {
+const FaultyTerminal = dynamic(() => import("@/components/faulty-terminal"), {
   ssr: false,
   loading: () => <div className="h-screen w-screen bg-black" />,
 });
 
 export default function PollClosedClientPage() {
   const searchParams = useSearchParams();
+  const hasToastedRef = useRef(false);
+  const authError = searchParams.get("auth_error");
+  const voted = searchParams.get("voted") === "true";
 
   useEffect(() => {
-    const authError = searchParams.get("auth_error");
-    const voted = searchParams.get("voted");
+    if (hasToastedRef.current) {
+      return;
+    }
+    hasToastedRef.current = true;
 
     if (authError === "unauthorized") {
       toast.error("Vous n'êtes pas autorisé à consulter cette page.");
-    } else if (voted === "true") {
-      toast.info("Vous avez déjà participé à ce sondage. Merci !");
+    } else if (voted) {
+      toast.success("Merci pour votre vote !");
     }
-  }, [searchParams]);
+  }, [authError, voted]);
 
   return (
     <>
@@ -49,14 +54,21 @@ export default function PollClosedClientPage() {
         <Card className="w-full max-w-md rounded-2xl border-slate-800 bg-slate-900/80 text-white backdrop-blur-lg">
           <CardHeader>
             <CardTitle className="text-center text-3xl font-bold tracking-tight">
-              Sondage fermé ou expiré
+              {voted ? "Vote enregistré" : "Sondage fermé ou expiré"}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4 p-8 pt-2">
-            <ShieldX className="h-20 w-20 text-red-500" />
+            {voted ? (
+              <div className="rounded-full bg-emerald-500/15 p-4">
+                <ShieldX className="h-12 w-12 text-emerald-400" />
+              </div>
+            ) : (
+              <ShieldX className="h-20 w-20 text-red-500" />
+            )}
             <p className="text-center text-slate-400">
-              Il n&apos;est plus possible de participer à ce sondage. Merci de
-              votre intérêt.
+              {voted
+                ? "Votre participation a bien été prise en compte. Merci pour votre vote."
+                : "Il n&apos;est plus possible de participer à ce sondage. Merci de votre intérêt."}
             </p>
           </CardContent>
         </Card>
