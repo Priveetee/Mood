@@ -1,34 +1,53 @@
-import { z } from "zod";
-import { router, procedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { CACHE_TTL, pollInfoKey } from "@/server/modules/cache/keys";
+import { getCacheValue, setCacheValue } from "@/server/modules/cache/store";
+import { submitVote } from "@/server/modules/poll/submit";
+import { procedure, router } from "../trpc";
+
+type PollInfoPayload = {
+  managerName: string;
+  campaignName: string;
+  commentsRequired: boolean;
+};
 
 export const pollRouter = router({
-  getInfoByToken: procedure
-    .input(z.string())
-    .query(async ({ ctx, input: pollToken }) => {
-      const pollLink = await ctx.prisma.pollLink.findUnique({
-        where: { token: pollToken },
-        select: {
-          managerName: true,
-          campaign: {
-            select: {
-              name: true,
-              commentsRequired: true,
-            },
+  getInfoByToken: procedure.input(z.string()).query(async ({ ctx, input: pollToken }) => {
+    const cacheKey = pollInfoKey(pollToken);
+    const cached = await getCacheValue<PollInfoPayload>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const pollLink = await ctx.prisma.pollLink.findUnique({
+      where: { token: pollToken },
+      select: {
+        managerName: true,
+        campaign: {
+          select: {
+            name: true,
+            commentsRequired: true,
           },
         },
+      },
+    });
+
+    if (!pollLink) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Lien de sondage invalide ou expire",
       });
+    }
 
-      if (!pollLink) {
-        throw new Error("Lien de sondage invalide ou expiré");
-      }
+    const payload = {
+      managerName: pollLink.managerName,
+      campaignName: pollLink.campaign.name,
+      commentsRequired: pollLink.campaign.commentsRequired,
+    };
 
-      return {
-        managerName: pollLink.managerName,
-        campaignName: pollLink.campaign.name,
-        commentsRequired: pollLink.campaign.commentsRequired,
-      };
-    }),
+    await setCacheValue(cacheKey, payload, CACHE_TTL.pollInfoSeconds);
+    return payload;
+  }),
 
   submitVote: procedure
     .input(
@@ -38,49 +57,12 @@ export const pollRouter = router({
         comment: z.string().optional(),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
-      const pollLink = await ctx.prisma.pollLink.findUnique({
-        where: { token: input.pollToken },
-        select: { id: true, campaignId: true },
-      });
-
-      if (!pollLink) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Lien de sondage introuvable ou expiré",
-        });
-      }
-
-      const campaign = await ctx.prisma.campaign.findUnique({
-        where: { id: pollLink.campaignId },
-        select: { commentsRequired: true },
-      });
-
-      if (!campaign) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Campagne introuvable",
-        });
-      }
-
-      const trimmedComment = input.comment?.trim() ?? "";
-
-      if (campaign.commentsRequired && trimmedComment.length === 0) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Le commentaire est obligatoire pour cette campagne.",
-        });
-      }
-
-      const vote = await ctx.prisma.vote.create({
-        data: {
-          pollLinkId: pollLink.id,
-          campaignId: pollLink.campaignId,
-          mood: input.mood,
-          comment: trimmedComment.length > 0 ? trimmedComment : null,
-        },
-      });
-
-      return { message: "Votre vote a bien été enregistré", voteId: vote.id };
-    }),
+    .mutation(async ({ ctx, input }) =>
+      submitVote({
+        prisma: ctx.prisma,
+        pollToken: input.pollToken,
+        mood: input.mood,
+        comment: input.comment,
+      }),
+    ),
 });
