@@ -1,28 +1,12 @@
 import { cn } from "@/lib/utils";
 
-const BentoGrid = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
+const BentoGrid = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
-    <div
-      className={cn("grid w-full grid-cols-1 sm:grid-cols-3 gap-4", className)}
-    >
-      {children}
-    </div>
+    <div className={cn("grid w-full grid-cols-1 sm:grid-cols-3 gap-4", className)}>{children}</div>
   );
 };
 
-const BentoCard = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
+const BentoCard = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
     <div
       className={cn(
@@ -36,4 +20,4 @@ const BentoCard = ({
   );
 };
 
-export { BentoGrid, BentoCard };
+export { BentoCard, BentoGrid };
