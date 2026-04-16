@@ -1,16 +1,13 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { appRouter } from "@/server/routers/_app";
-import { createContext } from "@/server/context";
+import { createPublicContext } from "@/server/context";
+import { publicRouter } from "@/server/routers/public";
 
 const handler = async (req: Request) => {
   return fetchRequestHandler({
     endpoint: "/api/public/trpc",
     req,
-    router: appRouter,
-    createContext: async () => {
-      const ctx = await createContext({ req });
-      return ctx;
-    },
+    router: publicRouter,
+    createContext: () => createPublicContext(req),
   });
 };
 

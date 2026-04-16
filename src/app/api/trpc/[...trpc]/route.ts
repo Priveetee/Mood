@@ -1,8 +1,8 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { appRouter } from "@/server/routers/_app";
-import { createContext } from "@/server/context";
-import { auth } from "@/auth";
 import { headers } from "next/headers";
+import { auth } from "@/auth";
+import { createContext } from "@/server/context";
+import { appRouter } from "@/server/routers/_app";
 
 const handler = async (req: Request) => {
   const session = await auth.api.getSession({

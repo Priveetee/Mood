@@ -24,10 +24,7 @@ export function computeEffectiveMode(mode: PerfMode): EffectivePerfMode {
 
   if (typeof navigator !== "undefined") {
     const nav = navigator as Navigator & { hardwareConcurrency?: number };
-    const hc =
-      typeof nav.hardwareConcurrency === "number"
-        ? nav.hardwareConcurrency
-        : undefined;
+    const hc = typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : undefined;
 
     if (hc !== undefined && hc <= 4) {
       return "low";

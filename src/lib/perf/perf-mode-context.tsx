@@ -1,13 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
-  PerfMode,
-  EffectivePerfMode,
-  loadPerfMode,
-  savePerfMode,
   computeEffectiveMode,
-} from "./mode";
+  type EffectivePerfMode,
+  loadPerfMode,
+  type PerfMode,
+  savePerfMode,
+} from "./perf-mode";
 
 interface PerfContextValue {
   mode: PerfMode;
@@ -19,8 +19,7 @@ const PerfContext = createContext<PerfContextValue | undefined>(undefined);
 
 export function PerfModeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setModeState] = useState<PerfMode>("auto");
-  const [effectiveMode, setEffectiveMode] =
-    useState<EffectivePerfMode>("normal");
+  const [effectiveMode, setEffectiveMode] = useState<EffectivePerfMode>("normal");
 
   useEffect(() => {
     const initial = loadPerfMode();
@@ -29,17 +28,15 @@ export function PerfModeProvider({ children }: { children: React.ReactNode }) {
     setEffectiveMode(computeEffectiveMode(initial));
   }, []);
 
-  const setMode = (next: PerfMode) => {
+  const setMode = useCallback((next: PerfMode) => {
     setModeState(next);
     savePerfMode(next);
     setEffectiveMode(computeEffectiveMode(next));
-  };
+  }, []);
 
-  return (
-    <PerfContext.Provider value={{ mode, effectiveMode, setMode }}>
-      {children}
-    </PerfContext.Provider>
-  );
+  const value = useMemo(() => ({ mode, effectiveMode, setMode }), [effectiveMode, mode, setMode]);
+
+  return <PerfContext.Provider value={value}>{children}</PerfContext.Provider>;
 }
 
 export function usePerfMode() {

@@ -1,16 +1,13 @@
+import { headers } from "next/headers";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { headers } from "next/headers";
 
 interface CreateContextOptions {
   req: Request;
   session?: typeof auth.$Infer.Session | null;
 }
 
-export async function createContext({
-  req: _req,
-  session,
-}: CreateContextOptions) {
+export async function createContext({ req: _req, session }: CreateContextOptions) {
   const finalSession =
     session !== undefined
       ? session
@@ -21,16 +18,16 @@ export async function createContext({
   return {
     session: finalSession,
     prisma,
+    req: _req,
   };
 }
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
 
-export async function createPublicContext() {
+export async function createPublicContext(req: Request) {
   return {
     session: null,
     prisma,
+    req,
   };
 }
-
-export type PublicContext = Awaited<ReturnType<typeof createPublicContext>>;
