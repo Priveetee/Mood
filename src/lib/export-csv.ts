@@ -26,14 +26,7 @@ export const exportToCSV = (votes: VoteData[], campaignName: string) => {
 
   const rows: string[][] = [];
 
-  rows.push([
-    "Date",
-    "Campagne",
-    "Manager",
-    "Utilisateur",
-    "Humeur",
-    "Commentaire",
-  ]);
+  rows.push(["Date", "Campagne", "Manager", "Utilisateur", "Humeur", "Commentaire"]);
 
   votes.forEach((vote) => {
     const moodLabel =
@@ -60,9 +53,7 @@ export const exportToCSV = (votes: VoteData[], campaignName: string) => {
     ]);
   });
 
-  const csvContent = rows
-    .map((row) => row.map(escapeCsvField).join(SEP))
-    .join("\n");
+  const csvContent = rows.map((row) => row.map(escapeCsvField).join(SEP)).join("\n");
 
   const BOM = "\uFEFF";
   const blob = new Blob([BOM + csvContent], {

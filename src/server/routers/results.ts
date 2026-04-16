@@ -1,13 +1,40 @@
 import { z } from "zod";
-import { router, protectedProcedure } from "../trpc";
+import {
+  CACHE_TTL,
+  filteredResultsKey,
+  resultCampaignOptionsKey,
+  resultManagerOptionsKey,
+} from "@/server/modules/cache/keys";
+import { getCacheValue, setCacheValue } from "@/server/modules/cache/store";
+import { buildResultsWhereClause } from "@/server/modules/results/filters";
+import { buildResultsSummary } from "@/server/modules/results/summary";
+import { protectedProcedure, router } from "../trpc";
+
+type CampaignOption = {
+  id: number;
+  name: string;
+};
+
+type FilteredResultsPayload = ReturnType<typeof buildResultsSummary> & {
+  participationRate: string;
+  campaignName: string;
+};
 
 export const resultsRouter = router({
   getCampaignOptions: protectedProcedure.query(async ({ ctx }) => {
+    const cacheKey = resultCampaignOptionsKey(ctx.session.user.id);
+    const cached = await getCacheValue<CampaignOption[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const campaigns = await ctx.prisma.campaign.findMany({
       where: { createdBy: ctx.session.user.id },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     });
+
+    await setCacheValue(cacheKey, campaigns, CACHE_TTL.resultOptionsSeconds);
     return campaigns;
   }),
 
@@ -18,6 +45,12 @@ export const resultsRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const cacheKey = resultManagerOptionsKey(ctx.session.user.id, input.campaignId);
+      const cached = await getCacheValue<string[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const campaignWhereClause =
         input.campaignId === "all"
           ? { createdBy: ctx.session.user.id }
@@ -36,7 +69,9 @@ export const resultsRouter = router({
         orderBy: { managerName: "asc" },
       });
 
-      return managers.map((m) => m.managerName);
+      const managerOptions = managers.map((m) => m.managerName);
+      await setCacheValue(cacheKey, managerOptions, CACHE_TTL.resultOptionsSeconds);
+      return managerOptions;
     }),
 
   getFilteredResults: protectedProcedure
@@ -51,25 +86,23 @@ export const resultsRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const whereClause: Record<string, unknown> = {};
-
-      if (input.campaignId === "all") {
-        whereClause.campaign = { createdBy: ctx.session.user.id };
-      } else {
-        whereClause.campaignId = input.campaignId;
-        whereClause.campaign = { createdBy: ctx.session.user.id };
+      const cacheKey = filteredResultsKey(
+        ctx.session.user.id,
+        input.campaignId,
+        input.managerName,
+        input.dateRange.from,
+        input.dateRange.to,
+      );
+      const cached = await getCacheValue<FilteredResultsPayload>(cacheKey);
+      if (cached) {
+        return cached;
       }
 
-      if (input.dateRange.from && input.dateRange.to) {
-        whereClause.createdAt = {
-          gte: input.dateRange.from,
-          lte: input.dateRange.to,
-        };
-      }
-
-      if (input.managerName !== "all") {
-        whereClause.pollLink = { managerName: input.managerName };
-      }
+      const whereClause = buildResultsWhereClause(ctx.session.user.id, {
+        campaignId: input.campaignId,
+        managerName: input.managerName,
+        dateRange: input.dateRange,
+      });
 
       const votes = await ctx.prisma.vote.findMany({
         where: whereClause,
@@ -84,77 +117,15 @@ export const resultsRouter = router({
         input.campaignId === "all"
           ? "Toutes les campagnes"
           : (votes[0]?.campaign.name ?? "Campagne sélectionnée");
+      const summary = buildResultsSummary(votes);
 
-      const totalVotes = votes.length;
-      const moodCounts = { green: 0, blue: 0, yellow: 0, red: 0 };
-      const comments: {
-        user: string;
-        manager: string;
-        comment: string;
-        mood: string;
-      }[] = [];
-
-      const allVotes = votes.map((vote) => ({
-        date: vote.createdAt.toISOString(),
-        campaign: vote.campaign.name,
-        manager: vote.pollLink.managerName,
-        user: "Anonyme",
-        mood: vote.mood,
-        comment: vote.comment || "",
-      }));
-
-      votes.forEach((vote) => {
-        moodCounts[vote.mood as keyof typeof moodCounts]++;
-        if (vote.comment) {
-          comments.push({
-            user: "Anonyme",
-            manager: vote.pollLink.managerName,
-            comment: vote.comment,
-            mood: vote.mood,
-          });
-        }
-      });
-
-      const moodDistribution = [
-        {
-          name: "Très bien",
-          votes: moodCounts.green,
-          fill: "#22c55e",
-          emoji: "😄",
-        },
-        {
-          name: "Bien",
-          votes: moodCounts.blue,
-          fill: "#38bdf8",
-          emoji: "🙂",
-        },
-        {
-          name: "Moyen",
-          votes: moodCounts.yellow,
-          fill: "#facc15",
-          emoji: "😕",
-        },
-        {
-          name: "Pas bien",
-          votes: moodCounts.red,
-          fill: "#ef4444",
-          emoji: "😠",
-        },
-      ];
-
-      const dominantMood = [...moodDistribution].sort(
-        (a, b) => b.votes - a.votes,
-      )[0];
-
-      return {
-        totalVotes,
-        moodDistribution,
-        comments,
-        allVotes,
-        dominantMood: dominantMood?.name ?? "N/A",
-        dominantMoodEmoji: dominantMood?.emoji ?? "🤔",
+      const payload = {
+        ...summary,
         participationRate: "N/A",
         campaignName,
       };
+
+      await setCacheValue(cacheKey, payload, CACHE_TTL.filteredResultsSeconds);
+      return payload;
     }),
 });
