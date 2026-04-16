@@ -81,6 +81,8 @@ docker compose up --build -d
 
 ### Automated production deploy script
 
+Recommended for server updates. The script can pull latest code, create a backup (`backups/*.dump`), rebuild/restart the web service, and run a final HTTP smoke check.
+
 ```bash
 bash scripts/deploy-prod.sh
 ```
@@ -91,16 +93,32 @@ With local uncommitted changes on server:
 bash scripts/deploy-prod.sh --stash-dirty
 ```
 
+Useful flags:
+
+```bash
+bash scripts/deploy-prod.sh --skip-backup
+bash scripts/deploy-prod.sh --skip-pull
+bash scripts/deploy-prod.sh --ref main --remote origin
+```
+
 ### One-line install and deploy
+
+Works from a clean machine: it clones the repo, prepares `.env` from `.env.example` when missing, applies optional overrides, then runs the production deploy script.
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh)
 ```
 
-Isolated install example:
+When passing options to the one-liner, keep the `--` separator:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh) -- --dir ~/mood-prod --project-name mood-prod --web-port 3010 --db-port 5460
+```
+
+Download or update sources without deploying:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Priveetee/Mood/main/scripts/install-stack.sh) -- --dir ~/mood-prod --download-only
 ```
 
 Services started by default:
