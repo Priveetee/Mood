@@ -10,7 +10,17 @@ WEB_PORT_OVERRIDE=""
 DB_PORT_OVERRIDE=""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/deploy-common.sh"
+COMMON_SCRIPT="${SCRIPT_DIR}/deploy-common.sh"
+COMMON_SCRIPT_TMP=""
+
+if [[ -f "${COMMON_SCRIPT}" ]]; then
+  source "${COMMON_SCRIPT}"
+else
+  COMMON_SCRIPT_TMP="$(mktemp)"
+  trap 'rm -f "${COMMON_SCRIPT_TMP}"' EXIT
+  curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/scripts/deploy-common.sh" -o "${COMMON_SCRIPT_TMP}"
+  source "${COMMON_SCRIPT_TMP}"
+fi
 
 usage() {
   cat <<'EOF'
@@ -30,6 +40,9 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --)
+      shift
+      ;;
     --ref)
       REF="$2"
       shift 2
@@ -91,13 +104,13 @@ fi
 if [[ ! -f "${INSTALL_DIR}/.env" ]]; then
   cp "${INSTALL_DIR}/.env.example" "${INSTALL_DIR}/.env"
   ensure_mood_env_defaults "${INSTALL_DIR}/.env"
-else
-  apply_mood_env_overrides \
-    "${INSTALL_DIR}/.env" \
-    "${PROJECT_NAME_OVERRIDE}" \
-    "${WEB_PORT_OVERRIDE}" \
-    "${DB_PORT_OVERRIDE}"
 fi
+
+apply_mood_env_overrides \
+  "${INSTALL_DIR}/.env" \
+  "${PROJECT_NAME_OVERRIDE}" \
+  "${WEB_PORT_OVERRIDE}" \
+  "${DB_PORT_OVERRIDE}"
 
 if [[ "${START_DEPLOY}" == "0" ]]; then
   echo "[install] Download complete at ${INSTALL_DIR}"
