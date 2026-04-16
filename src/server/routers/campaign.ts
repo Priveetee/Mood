@@ -1,160 +1,53 @@
-import { z } from "zod";
 import { nanoid } from "nanoid";
-import { router, protectedProcedure } from "../trpc";
-import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { createCampaign } from "@/server/modules/campaign/create";
+import {
+  addCampaignManager,
+  getCampaignLinks,
+  setCampaignArchiveStatus,
+} from "@/server/modules/campaign/links";
+import { listCampaigns } from "@/server/modules/campaign/list";
+import { protectedProcedure, router } from "../trpc";
 
 export const campaignRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
-    await ctx.prisma.campaign.updateMany({
-      where: {
-        createdBy: ctx.session.user.id,
-        archived: false,
-        expiresAt: {
-          lt: new Date(),
-        },
-      },
-      data: {
-        archived: true,
-      },
+    return listCampaigns({
+      prisma: ctx.prisma,
+      userId: ctx.session.user.id,
     });
-
-    const campaigns = await ctx.prisma.campaign.findMany({
-      where: { createdBy: ctx.session.user.id },
-      include: {
-        _count: {
-          select: {
-            pollLinks: true,
-            votes: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    const formattedCampaigns = await Promise.all(
-      campaigns.map(async (campaign) => {
-        const totalPollLinks = campaign._count.pollLinks;
-        const votedManagers = await ctx.prisma.vote.groupBy({
-          by: ["pollLinkId"],
-          where: { campaignId: campaign.id },
-        });
-        const votedManagersCount = votedManagers.length;
-        const participationRate =
-          totalPollLinks > 0
-            ? Math.round((votedManagersCount / totalPollLinks) * 100)
-            : 0;
-
-        return {
-          id: campaign.id,
-          name: campaign.name,
-          managerCount: totalPollLinks,
-          creationDate: campaign.createdAt.toLocaleDateString("fr-FR"),
-          participationRate,
-          totalVotes: campaign._count.votes,
-          archived: campaign.archived || false,
-          commentsRequired: campaign.commentsRequired,
-        };
-      }),
-    );
-    return formattedCampaigns;
   }),
 
-  getLinks: protectedProcedure
-    .input(z.number())
-    .query(async ({ ctx, input: campaignId }) => {
-      const campaign = await ctx.prisma.campaign.findUnique({
-        where: { id: campaignId, createdBy: ctx.session.user.id },
-        include: {
-          pollLinks: {
-            select: {
-              id: true,
-              managerName: true,
-              token: true,
-            },
-            orderBy: { managerName: "asc" },
-          },
-        },
-      });
-
-      if (!campaign) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Campagne introuvable",
-        });
-      }
-
-      return campaign.pollLinks.map((link) => ({
-        id: link.id,
-        managerName: link.managerName,
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/poll/${link.token}`,
-      }));
+  getLinks: protectedProcedure.input(z.number()).query(async ({ ctx, input: campaignId }) =>
+    getCampaignLinks({
+      prisma: ctx.prisma,
+      campaignId,
+      userId: ctx.session.user.id,
+      request: ctx.req,
     }),
+  ),
 
   addManager: protectedProcedure
     .input(z.object({ campaignId: z.number(), managerName: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const campaign = await ctx.prisma.campaign.findUnique({
-        where: { id: input.campaignId, createdBy: ctx.session.user.id },
+      return addCampaignManager({
+        prisma: ctx.prisma,
+        campaignId: input.campaignId,
+        managerName: input.managerName.trim(),
+        userId: ctx.session.user.id,
+        token: nanoid(10),
+        request: ctx.req,
       });
-
-      if (!campaign) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Campagne introuvable",
-        });
-      }
-
-      const existingLink = await ctx.prisma.pollLink.findFirst({
-        where: {
-          campaignId: input.campaignId,
-          managerName: input.managerName.trim(),
-        },
-      });
-
-      if (existingLink) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "Ce manager existe déjà pour cette campagne",
-        });
-      }
-
-      const newLink = await ctx.prisma.pollLink.create({
-        data: {
-          campaignId: input.campaignId,
-          managerName: input.managerName.trim(),
-          token: nanoid(10),
-        },
-      });
-
-      return {
-        id: newLink.id,
-        managerName: newLink.managerName,
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/poll/${newLink.token}`,
-      };
     }),
 
   setArchiveStatus: protectedProcedure
     .input(z.object({ campaignId: z.number(), archived: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      const campaign = await ctx.prisma.campaign.findUnique({
-        where: { id: input.campaignId, createdBy: ctx.session.user.id },
-      });
-
-      if (!campaign) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Campagne introuvable",
-        });
-      }
-
-      const updatedCampaign = await ctx.prisma.campaign.update({
-        where: { id: input.campaignId },
-        data: { archived: input.archived },
-      });
-
-      return { success: true, archived: updatedCampaign.archived };
+      return setCampaignArchiveStatus(
+        ctx.prisma,
+        input.campaignId,
+        input.archived,
+        ctx.session.user.id,
+      );
     }),
 
   create: protectedProcedure
@@ -166,41 +59,12 @@ export const campaignRouter = router({
         commentsRequired: z.boolean().optional().default(false),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
-      const campaign = await ctx.prisma.campaign.create({
-        data: {
-          name: input.name,
-          createdBy: ctx.session.user.id,
-          archived: false,
-          expiresAt: input.expiresAt,
-          commentsRequired: input.commentsRequired ?? false,
-        },
-      });
-
-      const pollLinksData = input.managers.map((managerName: string) => ({
-        campaignId: campaign.id,
-        token: nanoid(10),
-        managerName,
-      }));
-
-      await ctx.prisma.pollLink.createMany({
-        data: pollLinksData,
-      });
-
-      const pollLinks = await ctx.prisma.pollLink.findMany({
-        where: { campaignId: campaign.id },
-      });
-
-      const generatedLinks = pollLinks.map((link) => ({
-        managerName: link.managerName,
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/poll/${link.token}`,
-      }));
-
-      return {
-        campaignId: campaign.id,
-        campaignName: campaign.name,
-        generatedLinks,
-        commentsRequired: campaign.commentsRequired,
-      };
-    }),
+    .mutation(async ({ ctx, input }) =>
+      createCampaign({
+        prisma: ctx.prisma,
+        input,
+        userId: ctx.session.user.id,
+        request: ctx.req,
+      }),
+    ),
 });
