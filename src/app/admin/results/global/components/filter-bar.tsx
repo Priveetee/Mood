@@ -34,15 +34,13 @@ export function FilterBar({
   totalVotes,
 }: FilterBarProps) {
   return (
-    <div className="flex items-center justy-between gap-4 rounded-lg border border-slate-800 bg-slate-900 p-4">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-3 rounded-lg border border-slate-800 bg-slate-900 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+      <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2 sm:gap-4">
         <Select
           value={selectedCampaignId.toString()}
-          onValueChange={(id) =>
-            setSelectedCampaignId(id === "all" ? "all" : parseInt(id, 10))
-          }
+          onValueChange={(id) => setSelectedCampaignId(id === "all" ? "all" : parseInt(id, 10))}
         >
-          <SelectTrigger className="h-11 w-[280px] border-slate-700 bg-slate-800 text-white">
+          <SelectTrigger className="h-11 w-full border-slate-700 bg-slate-800 text-white sm:w-[280px]">
             <SelectValue placeholder="Toutes les campagnes" />
           </SelectTrigger>
           <SelectContent className="border-slate-800 bg-slate-900 text-white">
@@ -56,12 +54,10 @@ export function FilterBar({
         </Select>
         <Select
           value={selectedManager.toString()}
-          onValueChange={(manager) =>
-            setSelectedManager(manager as string | "all")
-          }
+          onValueChange={(manager) => setSelectedManager(manager)}
           disabled={managers.length === 0}
         >
-          <SelectTrigger className="h-11 w-[280px] border-slate-700 bg-slate-800 text-white">
+          <SelectTrigger className="h-11 w-full border-slate-700 bg-slate-800 text-white sm:w-[280px]">
             <SelectValue placeholder="Tous les managers" />
           </SelectTrigger>
           <SelectContent className="border-slate-800 bg-slate-900 text-white">
@@ -76,7 +72,7 @@ export function FilterBar({
       </div>
       <Button
         variant="outline"
-        className="h-11 gap-2 border-slate-700 bg-slate-800 text-white hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className="h-11 w-full gap-2 border-slate-700 bg-slate-800 text-white hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         onClick={onExport}
         disabled={isExportDisabled || totalVotes === 0}
       >

@@ -19,15 +19,13 @@ export function CommentsList({ comments }: CommentsListProps) {
         <CardTitle>Derniers Commentaires</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[430px] pr-4">
+        <ScrollArea className="h-[320px] pr-2 sm:h-[430px] sm:pr-4">
           <div className="space-y-6">
             {comments.length === 0 ? (
-              <p className="text-slate-400 text-center">
-                Aucun commentaire pour cette sélection.
-              </p>
+              <p className="text-slate-400 text-center">Aucun commentaire pour cette sélection.</p>
             ) : (
-              comments.map((item, index) => (
-                <div key={index} className="flex items-start gap-4">
+              comments.map((item) => (
+                <div key={`${item.manager}-${item.comment}`} className="flex items-start gap-4">
                   <div
                     className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${
                       item.mood === "green"

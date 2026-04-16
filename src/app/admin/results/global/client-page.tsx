@@ -1,164 +1,19 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { trpc } from "@/lib/trpc/client";
-import { useTheme } from "next-themes";
-import { useSilk } from "@/app/admin/SilkContext";
-import { exportToCSV } from "@/lib/export-csv";
-import { FilterBar } from "./components/FilterBar";
-import { DatePresetBar, DatePreset } from "./components/DatePresetBar";
-import { MoodChart } from "./components/MoodChart";
-import { CommentsList } from "./components/CommentsList";
-import { StatsCards } from "./components/StatsCards";
-import { PerfMotion } from "@/perf/motion";
-
-const lightThemeColor = "#1a55e0";
-const darkThemeColor = "#29204b";
-
-const getDateRangeFromPreset = (preset: DatePreset) => {
-  const now = new Date();
-  const from = new Date();
-
-  switch (preset) {
-    case "7d":
-      from.setDate(now.getDate() - 7);
-      return { from, to: now };
-    case "30d":
-      from.setDate(now.getDate() - 30);
-      return { from, to: now };
-    case "3m":
-      from.setMonth(now.getMonth() - 3);
-      return { from, to: now };
-    case "year":
-      from.setMonth(0);
-      from.setDate(1);
-      return { from, to: now };
-    case "all":
-      return { from: new Date(2020, 0, 1), to: now };
-    default:
-      return { from: new Date(now.getFullYear(), 0, 1), to: now };
-  }
-};
-
-type CampaignOption = { id: number; name: string };
+import Link from "next/link";
+import { PerfMotion } from "@/lib/perf/perf-motion";
+import { CommentsList } from "./components/comments-list";
+import { DatePresetBar } from "./components/date-preset-bar";
+import { FilterBar } from "./components/filter-bar";
+import { MoodChart } from "./components/mood-chart";
+import { StatsCards } from "./components/stats-cards";
+import { useResultsController } from "./use-results-controller";
 
 export default function GlobalResultsClient() {
-  const searchParams = useSearchParams();
-  const { setSilkColorAction } = useSilk();
-  const { theme } = useTheme();
+  const controller = useResultsController();
 
-  const [mounted, setMounted] = React.useState(false);
-  const [datePreset, setDatePreset] = React.useState<DatePreset>("year");
-  const [dateRange, setDateRange] = React.useState<
-    { from?: Date; to?: Date } | undefined
-  >(undefined);
-  const [selectedCampaignId, setSelectedCampaignId] = React.useState<
-    number | "all"
-  >("all");
-  const [selectedManager, setSelectedManager] = React.useState<string | "all">(
-    "all",
-  );
-
-  const defaultSilkColor = React.useMemo(() => {
-    return theme === "light" ? lightThemeColor : darkThemeColor;
-  }, [theme]);
-
-  const handleMoodHover = (color: string) => {
-    setSilkColorAction(color);
-  };
-
-  const handleMoodLeave = () => {
-    setSilkColorAction(defaultSilkColor);
-  };
-
-  React.useEffect(() => {
-    return () => {
-      setSilkColorAction(defaultSilkColor);
-    };
-  }, [defaultSilkColor, setSilkColorAction]);
-
-  React.useEffect(() => {
-    const campaignIdParam = searchParams.get("campaignId");
-    const parsedCampaignId = campaignIdParam
-      ? parseInt(campaignIdParam, 10)
-      : undefined;
-
-    setSelectedCampaignId(parsedCampaignId || "all");
-    setDateRange(getDateRangeFromPreset("year"));
-    setMounted(true);
-  }, [searchParams]);
-
-  const handleDatePresetChange = (preset: DatePreset) => {
-    setDatePreset(preset);
-    setDateRange(getDateRangeFromPreset(preset));
-  };
-
-  const campaignOptionsQuery = trpc.results.getCampaignOptions.useQuery();
-
-  React.useEffect(() => {
-    if (campaignOptionsQuery.isError) {
-      toast.error(campaignOptionsQuery.error.message);
-    }
-  }, [campaignOptionsQuery.isError, campaignOptionsQuery.error]);
-
-  const managerOptionsQuery = trpc.results.getManagerOptions.useQuery(
-    { campaignId: selectedCampaignId },
-    {
-      enabled: mounted,
-    },
-  );
-
-  React.useEffect(() => {
-    if (managerOptionsQuery.isError) {
-      toast.error(managerOptionsQuery.error.message);
-    }
-    if (managerOptionsQuery.isSuccess) {
-      setSelectedManager("all");
-    }
-  }, [
-    managerOptionsQuery.isError,
-    managerOptionsQuery.error,
-    managerOptionsQuery.isSuccess,
-  ]);
-
-  const resultsQuery = trpc.results.getFilteredResults.useQuery(
-    {
-      campaignId: selectedCampaignId,
-      managerName: selectedManager,
-      dateRange: { from: dateRange?.from, to: dateRange?.to },
-    },
-    {
-      enabled: mounted && dateRange !== undefined,
-    },
-  );
-
-  const campaignOptions = (campaignOptionsQuery.data || []) as CampaignOption[];
-
-  const handleExportCSV = () => {
-    if (!resultsQuery.data || resultsQuery.data.totalVotes === 0) {
-      toast.error("Aucune donnée à exporter");
-      return;
-    }
-
-    const campaignName =
-      selectedCampaignId === "all"
-        ? "toutes-campagnes"
-        : campaignOptions.find((campaign) => campaign.id === selectedCampaignId)
-            ?.name || "campagne";
-
-    try {
-      exportToCSV(resultsQuery.data.allVotes, campaignName);
-      toast.success("Export CSV réussi !");
-    } catch {
-      toast.error("Erreur lors de l'export");
-    }
-  };
-
-  if (!mounted) {
+  if (!controller.mounted) {
     return (
       <div className="flex min-h-screen items-center justify-center p-8">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-transparent" />
@@ -167,7 +22,7 @@ export default function GlobalResultsClient() {
   }
 
   return (
-    <div className="p-8">
+    <div className="flex min-h-screen flex-col justify-center p-4 pt-24 sm:p-6 sm:pt-28 lg:p-8 lg:pt-28">
       <Link
         href="/admin"
         className="mb-8 flex w-fit items-center gap-2 text-slate-400 transition-colors hover:text-white"
@@ -181,65 +36,66 @@ export default function GlobalResultsClient() {
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <header className="mx-auto mb-10 max-w-7xl">
-          <h1 className="text-4xl font-bold">Résultats Globaux</h1>
+          <h1 className="text-3xl font-bold sm:text-4xl">Resultats Globaux</h1>
           <p className="mt-2 text-slate-400">
-            Analysez et filtrez les résultats de toutes les campagnes.
+            Analysez et filtrez les resultats de toutes les campagnes.
           </p>
         </header>
 
         <main className="mx-auto max-w-7xl">
           <div className="mb-8 space-y-4">
             <FilterBar
-              selectedCampaignId={selectedCampaignId}
-              setSelectedCampaignId={setSelectedCampaignId}
-              selectedManager={selectedManager}
-              setSelectedManager={setSelectedManager}
-              campaigns={campaignOptions}
-              managers={managerOptionsQuery.data || []}
-              onExport={handleExportCSV}
-              isExportDisabled={resultsQuery.isLoading || !resultsQuery.data}
-              totalVotes={resultsQuery.data?.totalVotes || 0}
+              selectedCampaignId={controller.selectedCampaignId}
+              setSelectedCampaignId={controller.setSelectedCampaignId}
+              selectedManager={controller.selectedManager}
+              setSelectedManager={controller.setSelectedManager}
+              campaigns={controller.campaignOptions}
+              managers={controller.managerOptionsQuery.data || []}
+              onExport={controller.handleExportCSV}
+              isExportDisabled={controller.resultsQuery.isLoading || !controller.resultsQuery.data}
+              totalVotes={controller.resultsQuery.data?.totalVotes || 0}
             />
 
             <DatePresetBar
-              selectedPreset={datePreset}
-              onPresetChange={handleDatePresetChange}
+              selectedPreset={controller.datePreset}
+              onPresetChange={controller.handleDatePresetChange}
             />
           </div>
 
-          {resultsQuery.isLoading ? (
+          {controller.resultsQuery.isLoading ? (
             <div className="flex min-h-[400px] items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-transparent" />
             </div>
-          ) : !resultsQuery.data ? (
+          ) : !controller.resultsQuery.data ? (
             <div className="p-8 text-center text-slate-400">
-              {selectedCampaignId === "all"
-                ? "Aucun résultat disponible pour toutes les campagnes. Créez une campagne et recevez des votes."
-                : "Aucun résultat disponible pour la sélection. Essayez d'ajuster les filtres."}
+              {controller.selectedCampaignId === "all"
+                ? "Aucun resultat disponible pour toutes les campagnes."
+                : "Aucun resultat disponible pour la selection."}
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <MoodChart
-                  data={resultsQuery.data.moodDistribution}
-                  onMoodHover={handleMoodHover}
-                  onMoodLeave={handleMoodLeave}
+                  data={controller.resultsQuery.data.moodDistribution}
+                  onMoodHover={controller.handleMoodHover}
+                  onMoodLeave={controller.handleMoodLeave}
                 />
-                <CommentsList comments={resultsQuery.data.comments} />
+                <CommentsList comments={controller.resultsQuery.data.comments} />
               </div>
 
               <StatsCards
-                totalVotes={resultsQuery.data.totalVotes}
-                dominantMood={resultsQuery.data.dominantMood}
-                dominantMoodEmoji={resultsQuery.data.dominantMoodEmoji}
+                totalVotes={controller.resultsQuery.data.totalVotes}
+                dominantMood={controller.resultsQuery.data.dominantMood}
+                dominantMoodEmoji={controller.resultsQuery.data.dominantMoodEmoji}
                 onDominantMoodHover={() => {
-                  const dominantMoodData =
-                    resultsQuery.data.moodDistribution.find(
-                      (m) => m.name === resultsQuery.data.dominantMood,
-                    );
-                  if (dominantMoodData) handleMoodHover(dominantMoodData.fill);
+                  const dominantMoodData = controller.resultsQuery.data?.moodDistribution.find(
+                    (mood) => mood.name === controller.resultsQuery.data?.dominantMood,
+                  );
+                  if (dominantMoodData) {
+                    controller.handleMoodHover(dominantMoodData.fill);
+                  }
                 }}
-                onDominantMoodLeave={handleMoodLeave}
+                onDominantMoodLeave={controller.handleMoodLeave}
               />
             </>
           )}
