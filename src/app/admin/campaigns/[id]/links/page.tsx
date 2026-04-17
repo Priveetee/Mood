@@ -38,16 +38,12 @@ export default function CampaignLinksPage({ params }: { params: Promise<{ id: st
   }
 
   const handleCopyAll = () => {
-    const allLinks = data.generatedLinks
-      .map((link) => `${link.managerName}: ${link.url}`)
-      .join("\n");
+    const allLinks = data.generatedLinks.map((link) => `${link.label}: ${link.url}`).join("\n");
     data.copyToClipboard(allLinks, "Tous les liens ont ete copies !");
   };
 
   const handleSendEmail = () => {
-    const allLinks = data.generatedLinks
-      .map((link) => `${link.managerName}: ${link.url}`)
-      .join("\n");
+    const allLinks = data.generatedLinks.map((link) => `${link.label}: ${link.url}`).join("\n");
     const subject = `Liens pour la campagne de sondage: ${data.campaignName}`;
     const body = `Bonjour,\n\nVoici les liens de sondage :\n\n${allLinks}\n\nCordialement.`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -117,17 +113,14 @@ export default function CampaignLinksPage({ params }: { params: Promise<{ id: st
                     <motion.div variants={itemVariants} key={link.url}>
                       <div className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 p-4">
                         <span className="text-sm font-mono text-slate-300">
-                          {link.managerName}: {link.url}
+                          {link.label}: {link.url}
                         </span>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-slate-400"
                           onClick={() =>
-                            data.copyToClipboard(
-                              `${link.managerName}: ${link.url}`,
-                              "Lien du manager copie !",
-                            )
+                            data.copyToClipboard(`${link.label}: ${link.url}`, "Lien copie !")
                           }
                         >
                           <Copy className="h-4 w-4" />

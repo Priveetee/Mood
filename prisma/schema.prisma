@@ -1,12 +1,18 @@
 datasource db {
   provider = "postgresql"
 }
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
-
+enum CampaignType {
+  MANAGER_LINKS
+  SERVICE_UNIQUE
+}
+enum CampaignAccessLinkType {
+  VOTE
+  PUBLIC_READ_ONLY
+}
 model User {
   id            String   @id @default(cuid())
   name          String?
@@ -16,15 +22,11 @@ model User {
   password      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
-  accounts Account[]
-  sessions Session[]
-
-  campaigns Campaign[]
-
+  accounts      Account[]
+  sessions      Session[]
+  campaigns     Campaign[]
   @@map("user")
 }
-
 model Account {
   id                    String    @id @default(cuid())
   accountId             String
@@ -39,13 +41,10 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([providerId, accountId])
   @@map("account")
 }
-
 model Session {
   id        String   @id @default(cuid())
   expiresAt DateTime
@@ -55,68 +54,105 @@ model Session {
   ipAddress String?
   userAgent String?
   userId    String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("session")
 }
-
 model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
-
   @@unique([identifier, token])
 }
-
 model Campaign {
-  id               Int       @id @default(autoincrement())
-  name             String
-  createdBy        String
-  creator          User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  archived         Boolean   @default(false)
-  expiresAt        DateTime?
-  commentsRequired Boolean   @default(false)
-
-  pollLinks PollLink[]
-  votes     Vote[]     @relation("CampaignVotes")
-
+  id                    Int                   @id @default(autoincrement())
+  name                  String
+  type                  CampaignType          @default(MANAGER_LINKS)
+  createdBy             String
+  creator               User                  @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  archived              Boolean               @default(false)
+  expiresAt             DateTime?
+  commentsRequired      Boolean               @default(false)
+  allowMultipleVotes    Boolean               @default(true)
+  publicResultsEnabled  Boolean               @default(false)
+  pollLinks             PollLink[]
+  votes                 Vote[]                @relation("CampaignVotes")
+  services              CampaignService[]
+  accessLinks           CampaignAccessLink[]
+  serviceVotes          ServiceVote[]         @relation("CampaignServiceVotes")
+  serviceVoteAggregates ServiceVoteAggregate[] @relation("CampaignServiceVoteAggregates")
   @@index([createdBy])
 }
-
 model PollLink {
   id         String   @id @default(uuid())
   campaignId Int
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  token       String @unique
+  token      String   @unique
   managerName String
-
-  createdAt DateTime @default(now())
-
-  votes Vote[]
-
+  createdAt  DateTime @default(now())
+  votes      Vote[]
   @@index([campaignId])
 }
-
+model CampaignService {
+  id         String   @id @default(cuid())
+  campaignId Int
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name       String
+  createdAt  DateTime @default(now())
+  votes      ServiceVote[]
+  aggregates ServiceVoteAggregate[]
+  @@unique([campaignId, name])
+  @@index([campaignId])
+}
+model CampaignAccessLink {
+  id         String                 @id @default(cuid())
+  campaignId Int
+  campaign   Campaign               @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  type       CampaignAccessLinkType
+  token      String                 @unique
+  createdAt  DateTime               @default(now())
+  @@unique([campaignId, type])
+  @@index([campaignId])
+}
 model Vote {
   id         Int      @id @default(autoincrement())
   pollLinkId String
   pollLink   PollLink @relation(fields: [pollLinkId], references: [id], onDelete: Cascade)
   campaignId Int
   campaign   Campaign @relation("CampaignVotes", fields: [campaignId], references: [id], onDelete: Cascade)
-
-  mood    String
-  comment String?
-
-  createdAt DateTime @default(now())
-
+  mood       String
+  comment    String?
+  createdAt  DateTime @default(now())
   @@index([pollLinkId])
   @@index([campaignId])
 }
-
+model ServiceVote {
+  id                Int             @id @default(autoincrement())
+  campaignId        Int
+  campaign          Campaign        @relation("CampaignServiceVotes", fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignServiceId String
+  campaignService   CampaignService @relation(fields: [campaignServiceId], references: [id], onDelete: Cascade)
+  mood              String
+  comment           String?
+  voterKey          String?
+  createdAt         DateTime        @default(now())
+  @@index([campaignId])
+  @@index([campaignServiceId])
+  @@index([campaignId, createdAt])
+  @@index([campaignId, voterKey])
+}
+model ServiceVoteAggregate {
+  campaignId        Int
+  campaign          Campaign        @relation("CampaignServiceVoteAggregates", fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignServiceId String
+  campaignService   CampaignService @relation(fields: [campaignServiceId], references: [id], onDelete: Cascade)
+  mood              String
+  voteCount         Int             @default(0)
+  updatedAt         DateTime        @updatedAt
+  @@id([campaignId, campaignServiceId, mood])
+  @@index([campaignId])
+}
 model Verification {
   id         String   @id
   identifier String
@@ -124,6 +160,5 @@ model Verification {
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
-
   @@map("verification")
 }

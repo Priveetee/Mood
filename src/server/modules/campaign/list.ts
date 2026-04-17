@@ -35,6 +35,8 @@ async function fetchCampaigns(prisma: CampaignPrisma, userId: string) {
         select: {
           pollLinks: true,
           votes: true,
+          services: true,
+          serviceVotes: true,
         },
       },
     },
@@ -48,24 +50,37 @@ async function buildItem(
   prisma: CampaignPrisma,
   campaign: Awaited<ReturnType<typeof fetchCampaigns>>[number],
 ): Promise<CampaignListItem> {
-  const totalPollLinks = campaign._count.pollLinks;
-  const votedManagers = await prisma.vote.groupBy({
-    by: ["pollLinkId"],
-    where: { campaignId: campaign.id },
-  });
-  const votedManagersCount = votedManagers.length;
-  const participationRate =
-    totalPollLinks > 0 ? Math.round((votedManagersCount / totalPollLinks) * 100) : 0;
+  const isManagerCampaign = campaign.type === "MANAGER_LINKS";
+  const totalTargets = isManagerCampaign ? campaign._count.pollLinks : campaign._count.services;
+
+  const votedTargets = isManagerCampaign
+    ? (
+        await prisma.vote.groupBy({
+          by: ["pollLinkId"],
+          where: { campaignId: campaign.id },
+        })
+      ).length
+    : (
+        await prisma.serviceVote.groupBy({
+          by: ["campaignServiceId"],
+          where: { campaignId: campaign.id },
+        })
+      ).length;
+
+  const participationRate = totalTargets > 0 ? Math.round((votedTargets / totalTargets) * 100) : 0;
 
   return {
     id: campaign.id,
     name: campaign.name,
-    managerCount: totalPollLinks,
+    segmentCount: totalTargets,
+    campaignType: campaign.type,
     creationDate: campaign.createdAt.toLocaleDateString("fr-FR"),
     participationRate,
-    totalVotes: campaign._count.votes,
+    totalVotes: campaign._count.votes + campaign._count.serviceVotes,
     archived: campaign.archived || false,
     commentsRequired: campaign.commentsRequired,
+    allowMultipleVotes: campaign.allowMultipleVotes,
+    publicResultsEnabled: campaign.publicResultsEnabled,
   };
 }
 

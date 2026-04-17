@@ -9,6 +9,9 @@ export function useCampaignsController() {
   const [showArchived, setShowArchived] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(null);
   const [selectedCampaignName, setSelectedCampaignName] = useState("");
+  const [selectedCampaignType, setSelectedCampaignType] = useState<
+    "MANAGER_LINKS" | "SERVICE_UNIQUE"
+  >("MANAGER_LINKS");
   const [newManagerName, setNewManagerName] = useState("");
   const [isLinksDialogOpen, setIsLinksDialogOpen] = useState(false);
   const [isAddManagerOpen, setIsAddManagerOpen] = useState(false);
@@ -40,6 +43,21 @@ export function useCampaignsController() {
     },
     onError: (error) => {
       toast.error(error.message || "Echec de l'ajout du manager.");
+    },
+  });
+
+  const addServiceMutation = trpc.campaign.addService.useMutation({
+    onSuccess: (_, variables) => {
+      toast.success(`Service "${variables.serviceName}" ajoute !`);
+      setNewManagerName("");
+      setIsAddManagerOpen(false);
+      void utils.campaign.list.invalidate();
+      if (selectedCampaignId) {
+        void utils.campaign.getLinks.invalidate(selectedCampaignId);
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || "Echec de l'ajout du service.");
     },
   });
 
@@ -75,23 +93,35 @@ export function useCampaignsController() {
   function openLinksDialog(campaign: ActiveCampaign) {
     setSelectedCampaignId(campaign.id);
     setSelectedCampaignName(campaign.name);
+    setSelectedCampaignType(campaign.campaignType);
     setIsLinksDialogOpen(true);
   }
 
-  function openAddManagerDialog() {
+  function openAddTargetDialog() {
     setIsLinksDialogOpen(false);
     setIsAddManagerOpen(true);
   }
 
-  function handleAddManager() {
+  function handleAddTarget() {
     if (!newManagerName.trim() || !selectedCampaignId) {
       return;
     }
-    addManagerMutation.mutate({
+
+    if (selectedCampaignType === "MANAGER_LINKS") {
+      addManagerMutation.mutate({
+        campaignId: selectedCampaignId,
+        managerName: newManagerName.trim(),
+      });
+      return;
+    }
+
+    addServiceMutation.mutate({
       campaignId: selectedCampaignId,
-      managerName: newManagerName.trim(),
+      serviceName: newManagerName.trim(),
     });
   }
+
+  const isAddTargetPending = addManagerMutation.isPending || addServiceMutation.isPending;
 
   function handleArchive(campaignId: number, archive: boolean) {
     archiveMutation.mutate({ campaignId, archived: archive });
@@ -101,6 +131,7 @@ export function useCampaignsController() {
     showArchived,
     setShowArchived,
     selectedCampaignName,
+    selectedCampaignType,
     setSelectedCampaignName,
     selectedCampaignId,
     isLinksDialogOpen,
@@ -112,10 +143,12 @@ export function useCampaignsController() {
     campaignsQuery,
     linksQuery,
     addManagerMutation,
+    addServiceMutation,
+    isAddTargetPending,
     displayedCampaigns,
     openLinksDialog,
-    openAddManagerDialog,
-    handleAddManager,
+    openAddTargetDialog,
+    handleAddTarget,
     handleArchive,
   };
 }

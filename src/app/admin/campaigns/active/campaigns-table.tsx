@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArchiveRestore, ArrowRight, ChevronDown, Edit } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowRight, ChevronDown, Edit, Link2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +33,8 @@ export function CampaignsTable({ campaigns, showArchived, onManage, onArchiveTog
       <TableHeader>
         <TableRow className="border-slate-800 hover:bg-transparent">
           <TableHead className="text-white">Nom</TableHead>
-          <TableHead className="text-center text-white">Liens</TableHead>
+          <TableHead className="text-center text-white">Type</TableHead>
+          <TableHead className="text-center text-white">Segments</TableHead>
           <TableHead className="text-center text-white">Votes</TableHead>
           <TableHead className="text-white">Date</TableHead>
           <TableHead className="w-[200px] text-white">Participation</TableHead>
@@ -44,7 +45,19 @@ export function CampaignsTable({ campaigns, showArchived, onManage, onArchiveTog
         {campaigns.map((campaign) => (
           <TableRow key={campaign.id} className="border-slate-800 hover:bg-slate-900/80">
             <TableCell className="font-medium text-slate-200">{campaign.name}</TableCell>
-            <TableCell className="text-center text-slate-300">{campaign.managerCount}</TableCell>
+            <TableCell className="text-center">
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${
+                  campaign.campaignType === "SERVICE_UNIQUE"
+                    ? "bg-sky-900/60 text-sky-300"
+                    : "bg-emerald-900/60 text-emerald-300"
+                }`}
+              >
+                <Link2 className="h-3 w-3" />
+                {campaign.campaignType === "SERVICE_UNIQUE" ? "Service" : "Manager"}
+              </span>
+            </TableCell>
+            <TableCell className="text-center text-slate-300">{campaign.segmentCount}</TableCell>
             <TableCell className="text-center text-slate-300">{campaign.totalVotes}</TableCell>
             <TableCell className="text-slate-300">{campaign.creationDate}</TableCell>
             <TableCell>

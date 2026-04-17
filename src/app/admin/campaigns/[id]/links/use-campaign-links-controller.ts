@@ -46,7 +46,7 @@ export function useCampaignLinksController(campaignId: number) {
   const campaignName =
     campaignQuery.data?.find((campaign) => campaign.id === campaignId)?.name || "Campagne";
   const generatedLinks =
-    linksQuery.data?.map((link) => ({ managerName: link.managerName, url: link.url })) || [];
+    linksQuery.data?.map((link) => ({ label: link.label, url: link.url, kind: link.kind })) || [];
 
   return {
     campaignQuery,

@@ -39,3 +39,15 @@ export function buildPollUrl(token: string, request?: Request | null): string {
     });
   }
 }
+
+export function buildPublicResultsUrl(token: string, request?: Request | null): string {
+  try {
+    const appUrl = resolveBaseUrl(request);
+    return `${appUrl}/public/${token}`;
+  } catch {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: URL_ERRORS.appUrlInvalid,
+    });
+  }
+}

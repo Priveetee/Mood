@@ -16,36 +16,38 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   campaignName: string;
+  campaignType: "MANAGER_LINKS" | "SERVICE_UNIQUE";
   links: CampaignLink[];
   isLoading: boolean;
   onCopyLink: (value: string) => void;
   onCopyAll: () => void;
   onSendEmail: () => void;
-  onOpenAddManager: () => void;
+  onOpenAddTarget: () => void;
 };
 
 export function CampaignLinksDialog({
   open,
   onOpenChange,
   campaignName,
+  campaignType,
   links,
   isLoading,
   onCopyLink,
   onCopyAll,
   onSendEmail,
-  onOpenAddManager,
+  onOpenAddTarget,
 }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl border-slate-800 bg-slate-900 text-white">
-        <DialogHeader className="flex-row items-center justify-between pr-6">
+        <DialogHeader className="flex-col gap-3 pr-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <DialogTitle className="text-white">Gerer la campagne: {campaignName}</DialogTitle>
             <DialogDescription className="text-slate-400">
               {links.length} lien(s) genere(s)
             </DialogDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
             <Button
               variant="outline"
               className="gap-2 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
@@ -73,7 +75,7 @@ export function CampaignLinksDialog({
                 className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 p-3"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-200">{link.managerName}</p>
+                  <p className="text-sm font-medium text-slate-200">{link.label}</p>
                   <p className="truncate text-xs text-slate-400">{link.url}</p>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => onCopyLink(link.url)}>
@@ -83,12 +85,14 @@ export function CampaignLinksDialog({
             ))}
           </div>
         </ScrollArea>
-        <div className="mt-4 flex justify-end">
-          <Button className="gap-2" onClick={onOpenAddManager}>
-            <Plus className="h-4 w-4" />
-            Ajouter un manager
-          </Button>
-        </div>
+        {(campaignType === "MANAGER_LINKS" || campaignType === "SERVICE_UNIQUE") && (
+          <div className="mt-4 flex justify-end">
+            <Button className="gap-2" onClick={onOpenAddTarget}>
+              <Plus className="h-4 w-4" />
+              {campaignType === "MANAGER_LINKS" ? "Ajouter un manager" : "Ajouter un service"}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
