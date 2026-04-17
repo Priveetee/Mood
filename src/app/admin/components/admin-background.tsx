@@ -9,9 +9,15 @@ import { initAdminSimpleMode } from "@/lib/simple-mode";
 
 export function AdminBackground() {
   const { effectiveMode, mode } = usePerfMode();
-  const [simple, setSimple] = useState(() => initAdminSimpleMode());
+  const [simple, setSimple] = useState(false);
   const [targetColor, setTargetColor] = useState(darkThemeColor);
   const simpleRef = useRef(simple);
+
+  useEffect(() => {
+    const initialSimple = initAdminSimpleMode();
+    setSimple(initialSimple);
+    simpleRef.current = initialSimple;
+  }, []);
 
   useEffect(() => {
     simpleRef.current = simple;
