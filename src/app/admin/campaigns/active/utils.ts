@@ -20,7 +20,7 @@ export function copyToClipboard(text: string) {
 }
 
 export function toLinksText(links: CampaignLink[]) {
-  return links.map((link) => `${link.managerName}: ${link.url}`).join("\n");
+  return links.map((link) => `${link.label}: ${link.url}`).join("\n");
 }
 
 export function sendLinksByEmail(links: CampaignLink[], campaignName: string) {
