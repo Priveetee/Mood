@@ -24,7 +24,7 @@ export function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("bg-background group/calendar p-3 [--cell-size:--spacing(8)]", className)}
+      className={cn("group/calendar p-3 [--cell-size:--spacing(8)]", className)}
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) => date.toLocaleString("default", { month: "short" }),

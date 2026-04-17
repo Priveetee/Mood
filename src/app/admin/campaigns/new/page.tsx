@@ -3,24 +3,31 @@
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar as CalendarIcon, Plus, X } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { CampaignTargetsEditor } from "./campaign-targets-editor";
+import { ServiceCampaignOptions } from "./service-campaign-options";
 import { useNewCampaignController } from "./use-new-campaign-controller";
 
 export default function NewCampaignPage() {
   const controller = useNewCampaignController();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 pt-24 sm:p-8 sm:pt-8">
+    <div className="flex min-h-screen flex-col items-center justify-start p-4 pt-24 sm:p-8 sm:pt-8">
       <div className="w-full max-w-3xl">
         <div className="mb-8 flex items-center justify-between">
           <Link
@@ -50,29 +57,34 @@ export default function NewCampaignPage() {
                 className="h-12 border-slate-700 bg-slate-800 text-lg text-white placeholder:text-slate-400"
               />
 
-              <div className="flex gap-2">
-                <Input
-                  value={controller.currentManager}
-                  onChange={(event) => controller.setCurrentManager(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      controller.handleAddManager();
-                    }
-                  }}
-                  placeholder="Ajouter un manager"
-                  className="h-12 border-slate-700 bg-slate-800 text-lg text-white placeholder:text-slate-400"
-                />
-                <Button
-                  type="button"
-                  size="icon"
-                  className="h-12 w-12 flex-shrink-0"
-                  onClick={controller.handleAddManager}
-                  disabled={!controller.currentManager.trim()}
-                >
-                  <Plus className="h-5 w-5" />
-                </Button>
-              </div>
+              <Select
+                value={controller.campaignType}
+                onValueChange={(value) =>
+                  controller.setCampaignType(value as "MANAGER_LINKS" | "SERVICE_UNIQUE")
+                }
+              >
+                <SelectTrigger className="h-12 border-slate-700 bg-slate-800 text-white">
+                  <SelectValue placeholder="Type de campagne" />
+                </SelectTrigger>
+                <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                  <SelectItem value="MANAGER_LINKS">Liens par manager</SelectItem>
+                  <SelectItem value="SERVICE_UNIQUE">Lien unique par services</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <CampaignTargetsEditor
+                campaignType={controller.campaignType}
+                currentManager={controller.currentManager}
+                setCurrentManager={controller.setCurrentManager}
+                managers={controller.managers}
+                onAddManager={controller.handleAddManager}
+                onRemoveManager={controller.handleRemoveManager}
+                currentService={controller.currentService}
+                setCurrentService={controller.setCurrentService}
+                services={controller.services}
+                onAddService={controller.handleAddService}
+                onRemoveService={controller.handleRemoveService}
+              />
 
               <Popover>
                 <PopoverTrigger asChild>
@@ -89,8 +101,9 @@ export default function NewCampaignPage() {
                       : "Date d'expiration (optionnel)"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto border-slate-800 bg-slate-900 p-0 text-white">
+                <PopoverContent className="w-auto border-slate-800 bg-slate-950 p-0 text-white shadow-2xl">
                   <Calendar
+                    className="rounded-md bg-slate-950 text-white"
                     mode="single"
                     selected={controller.expiresAt}
                     onSelect={controller.setExpiresAt}
@@ -116,27 +129,11 @@ export default function NewCampaignPage() {
                 />
               </div>
 
-              {controller.managers.length > 0 && (
-                <ScrollArea className="h-48 w-full">
-                  <div className="flex flex-wrap gap-3 p-1">
-                    {controller.managers.map((manager) => (
-                      <Badge
-                        key={manager}
-                        variant="secondary"
-                        className="bg-slate-700 py-1 px-3 text-base text-slate-200"
-                      >
-                        {manager}
-                        <button
-                          type="button"
-                          onClick={() => controller.handleRemoveManager(manager)}
-                          className="ml-2 rounded-full p-0.5 hover:bg-slate-600"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </ScrollArea>
+              {controller.campaignType === "SERVICE_UNIQUE" && (
+                <ServiceCampaignOptions
+                  allowMultipleVotes={controller.allowMultipleVotes}
+                  setAllowMultipleVotes={controller.setAllowMultipleVotes}
+                />
               )}
 
               <Button
@@ -144,7 +141,10 @@ export default function NewCampaignPage() {
                 className="h-12 w-full text-lg font-semibold"
                 disabled={
                   !controller.campaignName ||
-                  controller.managers.length === 0 ||
+                  (controller.campaignType === "MANAGER_LINKS" &&
+                    controller.managers.length === 0) ||
+                  (controller.campaignType === "SERVICE_UNIQUE" &&
+                    controller.services.length === 0) ||
                   controller.createCampaign.isPending
                 }
               >
