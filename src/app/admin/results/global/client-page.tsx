@@ -7,6 +7,7 @@ import { CommentsList } from "./components/comments-list";
 import { DatePresetBar } from "./components/date-preset-bar";
 import { FilterBar } from "./components/filter-bar";
 import { MoodChart } from "./components/mood-chart";
+import { PublicResultsPanel } from "./components/public-results-panel";
 import { StatsCards } from "./components/stats-cards";
 import { useResultsController } from "./use-results-controller";
 
@@ -47,6 +48,8 @@ export default function GlobalResultsClient() {
             <FilterBar
               selectedCampaignId={controller.selectedCampaignId}
               setSelectedCampaignId={controller.setSelectedCampaignId}
+              selectedSegmentType={controller.selectedSegmentType}
+              setSelectedSegmentType={controller.setSelectedSegmentType}
               selectedManager={controller.selectedManager}
               setSelectedManager={controller.setSelectedManager}
               campaigns={controller.campaignOptions}
@@ -55,6 +58,14 @@ export default function GlobalResultsClient() {
               isExportDisabled={controller.resultsQuery.isLoading || !controller.resultsQuery.data}
               totalVotes={controller.resultsQuery.data?.totalVotes || 0}
             />
+
+            {controller.canManagePublicResults && (
+              <PublicResultsPanel
+                isEnabled={controller.selectedCampaign?.publicResultsEnabled ?? false}
+                isPending={controller.publicResultsMutation.isPending}
+                onToggle={controller.handleTogglePublicResults}
+              />
+            )}
 
             <DatePresetBar
               selectedPreset={controller.datePreset}
@@ -86,7 +97,7 @@ export default function GlobalResultsClient() {
               <StatsCards
                 totalVotes={controller.resultsQuery.data.totalVotes}
                 dominantMood={controller.resultsQuery.data.dominantMood}
-                dominantMoodEmoji={controller.resultsQuery.data.dominantMoodEmoji}
+                dominantMoodEmojiCode={controller.resultsQuery.data.dominantMoodEmojiCode}
                 onDominantMoodHover={() => {
                   const dominantMoodData = controller.resultsQuery.data?.moodDistribution.find(
                     (mood) => mood.name === controller.resultsQuery.data?.dominantMood,

@@ -3,7 +3,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Comment {
   user: string;
-  manager: string;
+  segment: string;
+  source: "manager" | "service";
   comment: string;
   mood: string;
 }
@@ -25,7 +26,7 @@ export function CommentsList({ comments }: CommentsListProps) {
               <p className="text-slate-400 text-center">Aucun commentaire pour cette sélection.</p>
             ) : (
               comments.map((item) => (
-                <div key={`${item.manager}-${item.comment}`} className="flex items-start gap-4">
+                <div key={`${item.segment}-${item.comment}`} className="flex items-start gap-4">
                   <div
                     className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${
                       item.mood === "green"
@@ -43,7 +44,7 @@ export function CommentsList({ comments }: CommentsListProps) {
                     <p className="font-semibold text-slate-300">
                       {item.user}{" "}
                       <span className="text-xs font-normal text-slate-500">
-                        (Équipe {item.manager})
+                        ({item.source === "manager" ? "Manager" : "Service"} {item.segment})
                       </span>
                     </p>
                     <p className="text-sm text-slate-400">{item.comment}</p>

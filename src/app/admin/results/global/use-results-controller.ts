@@ -1,35 +1,32 @@
 "use client";
 
 import { keepPreviousData } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import * as React from "react";
 import { toast } from "sonner";
 import { useSilk } from "@/app/admin/silk-context";
 import { exportToCSV } from "@/lib/export-csv";
 import { trpc } from "@/lib/trpc";
-import {
-  type DatePreset,
-  darkThemeColor,
-  getDateRangeFromPreset,
-  lightThemeColor,
-} from "./constants";
-
-type CampaignOption = { id: number; name: string };
+import { darkThemeColor, lightThemeColor } from "./constants";
+import { type CampaignOption, usePublicResultsToggle } from "./use-public-results-toggle";
+import { useResultsState } from "./use-results-state";
 
 export function useResultsController() {
-  const searchParams = useSearchParams();
   const { setSilkColorAction } = useSilk();
   const { theme } = useTheme();
 
-  const [mounted, setMounted] = React.useState(false);
-  const [datePreset, setDatePreset] = React.useState<DatePreset>("year");
-  const [dateRange, setDateRange] = React.useState<{ from?: Date; to?: Date } | undefined>(
-    undefined,
-  );
-  const [selectedCampaignId, setSelectedCampaignId] = React.useState<number | "all">("all");
-  const [selectedManager, setSelectedManager] = React.useState<string | "all">("all");
-
+  const {
+    mounted,
+    datePreset,
+    dateRange,
+    selectedCampaignId,
+    selectedManager,
+    selectedSegmentType,
+    setSelectedCampaignId,
+    setSelectedManager,
+    setSelectedSegmentType,
+    handleDatePresetChange,
+  } = useResultsState();
   const defaultSilkColor = React.useMemo(
     () => (theme === "light" ? lightThemeColor : darkThemeColor),
     [theme],
@@ -43,7 +40,7 @@ export function useResultsController() {
     placeholderData: keepPreviousData,
   });
   const managerOptionsQuery = trpc.results.getManagerOptions.useQuery(
-    { campaignId: selectedCampaignId },
+    { campaignId: selectedCampaignId, segmentType: selectedSegmentType },
     {
       enabled: mounted,
       staleTime: 45_000,
@@ -58,6 +55,7 @@ export function useResultsController() {
     {
       campaignId: selectedCampaignId,
       managerName: selectedManager,
+      segmentType: selectedSegmentType,
       dateRange: { from: dateRange?.from, to: dateRange?.to },
     },
     {
@@ -77,14 +75,6 @@ export function useResultsController() {
   }, [defaultSilkColor, setSilkColorAction]);
 
   React.useEffect(() => {
-    const campaignIdParam = searchParams.get("campaignId");
-    const parsedCampaignId = campaignIdParam ? parseInt(campaignIdParam, 10) : undefined;
-    setSelectedCampaignId(parsedCampaignId || "all");
-    setDateRange(getDateRangeFromPreset("year"));
-    setMounted(true);
-  }, [searchParams]);
-
-  React.useEffect(() => {
     if (campaignOptionsQuery.isError) {
       toast.error(campaignOptionsQuery.error.message);
     }
@@ -97,9 +87,20 @@ export function useResultsController() {
     if (managerOptionsQuery.isSuccess) {
       setSelectedManager("all");
     }
-  }, [managerOptionsQuery.isError, managerOptionsQuery.error, managerOptionsQuery.isSuccess]);
+  }, [
+    managerOptionsQuery.isError,
+    managerOptionsQuery.error,
+    managerOptionsQuery.isSuccess,
+    setSelectedManager,
+  ]);
 
   const campaignOptions = (campaignOptionsQuery.data || []) as CampaignOption[];
+  const {
+    selectedCampaign,
+    canManagePublicResults,
+    publicResultsMutation,
+    handleTogglePublicResults,
+  } = usePublicResultsToggle(campaignOptions, selectedCampaignId, campaignOptionsQuery.refetch);
 
   function handleMoodHover(color: string) {
     if (resultsQuery.isFetching) {
@@ -110,11 +111,6 @@ export function useResultsController() {
 
   function handleMoodLeave() {
     setSilkColorAction(defaultSilkColor);
-  }
-
-  function handleDatePresetChange(preset: DatePreset) {
-    setDatePreset(preset);
-    setDateRange(getDateRangeFromPreset(preset));
   }
 
   function handleExportCSV() {
@@ -140,12 +136,18 @@ export function useResultsController() {
     datePreset,
     selectedCampaignId,
     selectedManager,
+    selectedSegmentType,
+    selectedCampaign,
+    canManagePublicResults,
+    handleTogglePublicResults,
+    publicResultsMutation,
     campaignOptions,
     campaignOptionsQuery,
     managerOptionsQuery,
     resultsQuery,
     setSelectedCampaignId,
     setSelectedManager,
+    setSelectedSegmentType,
     handleDatePresetChange,
     handleExportCSV,
     handleMoodHover,
