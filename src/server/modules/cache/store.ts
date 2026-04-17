@@ -83,8 +83,13 @@ export async function deleteCacheByPatterns(patterns: string[]) {
   try {
     const keys = new Set<string>();
     for (const pattern of patterns) {
-      for await (const keyBatch of client.scanIterator({ MATCH: pattern, COUNT: 100 })) {
-        for (const key of keyBatch) {
+      for await (const item of client.scanIterator({ MATCH: pattern, COUNT: 100 })) {
+        if (typeof item === "string") {
+          keys.add(item);
+          continue;
+        }
+
+        for (const key of item) {
           keys.add(key);
         }
       }
