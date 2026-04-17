@@ -25,7 +25,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       <SilkProvider>
         <AnimatedAdminBackground />
         <AdminTopBar />
-        <div className="min-h-screen text-slate-50 pt-20 sm:pt-0">
+        <div className="min-h-screen pt-20 text-slate-50 font-admin sm:pt-0">
           <Suspense
             fallback={
               <div className="flex min-h-screen items-center justify-center">
