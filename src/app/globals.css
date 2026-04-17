@@ -121,6 +121,18 @@
   }
 }
 
+.font-home {
+  font-family: var(--font-soria), sans-serif;
+}
+
+.font-admin {
+  font-family: var(--font-josefin-sans), sans-serif;
+}
+
+.font-user {
+  font-family: var(--font-reddit-sans), sans-serif;
+}
+
 .card--border-glow {
   --glow-color: 132, 0, 255;
   --glow-x: 50%;

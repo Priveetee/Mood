@@ -9,7 +9,7 @@ export default function HomePage() {
       <div className="fixed top-0 left-0 -z-10 h-screen w-screen">
         <Silk color="#6ed728" speed={2} scale={1.5} noiseIntensity={1} />
       </div>
-      <main className="relative flex h-screen w-screen items-center justify-center overflow-hidden p-8 text-center">
+      <main className="relative flex h-screen w-screen items-center justify-center overflow-hidden p-8 text-center font-home">
         <div className="relative z-10 flex flex-col items-center">
           <Image
             src="/icon.svg"
