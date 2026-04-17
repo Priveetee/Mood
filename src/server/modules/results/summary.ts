@@ -1,37 +1,41 @@
-type VoteWithRelations = {
+export type VoteSummaryInput = {
   mood: string;
   comment: string | null;
   createdAt: Date;
-  pollLink: { managerName: string };
-  campaign: { name: string };
+  segment: string;
+  source: "manager" | "service";
+  campaignName: string;
 };
 
 type MoodDistributionItem = {
   name: string;
   votes: number;
   fill: string;
-  emoji: string;
+  emojiCode: string;
 };
-
-function toEmoji(...codePoints: number[]) {
-  return String.fromCodePoint(...codePoints);
-}
 
 const MOOD_META: Record<string, Omit<MoodDistributionItem, "votes">> = {
-  green: { name: "Très bien", fill: "#22c55e", emoji: toEmoji(0x1f60a) },
-  blue: { name: "Bien", fill: "#38bdf8", emoji: toEmoji(0x1f642) },
-  yellow: { name: "Moyen", fill: "#facc15", emoji: toEmoji(0x1f610) },
-  red: { name: "Pas bien", fill: "#ef4444", emoji: toEmoji(0x2639, 0xfe0f) },
+  green: { name: "Très bien", fill: "#22c55e", emojiCode: "1F60A" },
+  blue: { name: "Bien", fill: "#38bdf8", emojiCode: "1F642" },
+  yellow: { name: "Moyen", fill: "#facc15", emojiCode: "1F610" },
+  red: { name: "Pas bien", fill: "#ef4444", emojiCode: "2639-FE0F" },
 };
 
-export function buildResultsSummary(votes: VoteWithRelations[]) {
+export function buildResultsSummary(votes: VoteSummaryInput[]) {
   const moodCounts = { green: 0, blue: 0, yellow: 0, red: 0 };
-  const comments: Array<{ user: string; manager: string; comment: string; mood: string }> = [];
+  const comments: Array<{
+    user: string;
+    segment: string;
+    source: "manager" | "service";
+    comment: string;
+    mood: string;
+  }> = [];
 
   const allVotes = votes.map((vote) => ({
     date: vote.createdAt.toISOString(),
-    campaign: vote.campaign.name,
-    manager: vote.pollLink.managerName,
+    campaign: vote.campaignName,
+    segment: vote.segment,
+    source: vote.source,
     user: "Anonyme",
     mood: vote.mood,
     comment: vote.comment || "",
@@ -44,7 +48,8 @@ export function buildResultsSummary(votes: VoteWithRelations[]) {
     if (vote.comment) {
       comments.push({
         user: "Anonyme",
-        manager: vote.pollLink.managerName,
+        segment: vote.segment,
+        source: vote.source,
         comment: vote.comment,
         mood: vote.mood,
       });
@@ -66,6 +71,6 @@ export function buildResultsSummary(votes: VoteWithRelations[]) {
     comments,
     allVotes,
     dominantMood: dominantMood?.name ?? "N/A",
-    dominantMoodEmoji: dominantMood?.emoji ?? "?",
+    dominantMoodEmojiCode: dominantMood?.emojiCode ?? "1F610",
   };
 }
