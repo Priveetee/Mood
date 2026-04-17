@@ -7,11 +7,17 @@ import { trpc } from "@/lib/trpc";
 
 export function useNewCampaignController() {
   const router = useRouter();
+  const [campaignType, setCampaignType] = useState<"MANAGER_LINKS" | "SERVICE_UNIQUE">(
+    "MANAGER_LINKS",
+  );
   const [campaignName, setCampaignName] = useState("");
   const [currentManager, setCurrentManager] = useState("");
   const [managers, setManagers] = useState<string[]>([]);
+  const [currentService, setCurrentService] = useState("");
+  const [services, setServices] = useState<string[]>([]);
   const [expiresAt, setExpiresAt] = useState<Date | undefined>();
   const [commentsRequired, setCommentsRequired] = useState(false);
+  const [allowMultipleVotes, setAllowMultipleVotes] = useState(true);
 
   const createCampaign = trpc.campaign.create.useMutation({
     onSuccess: (data) => {
@@ -42,25 +48,51 @@ export function useNewCampaignController() {
   function handleGenerate() {
     createCampaign.mutate({
       name: campaignName,
+      campaignType,
       managers,
+      services,
       expiresAt,
       commentsRequired,
+      allowMultipleVotes,
     });
   }
 
+  function handleAddService() {
+    if (!currentService.trim() || services.includes(currentService.trim())) {
+      return;
+    }
+    setServices((prev) => [...prev, currentService.trim()]);
+    setCurrentService("");
+    toast.success(`Service "${currentService.trim()}" ajoute.`);
+  }
+
+  function handleRemoveService(serviceToRemove: string) {
+    setServices((prev) => prev.filter((service) => service !== serviceToRemove));
+    toast.error(`Service "${serviceToRemove}" supprime.`);
+  }
+
   return {
+    campaignType,
+    setCampaignType,
     campaignName,
     setCampaignName,
     currentManager,
     setCurrentManager,
     managers,
+    currentService,
+    setCurrentService,
+    services,
     expiresAt,
     setExpiresAt,
     commentsRequired,
     setCommentsRequired,
+    allowMultipleVotes,
+    setAllowMultipleVotes,
     createCampaign,
     handleAddManager,
     handleRemoveManager,
+    handleAddService,
+    handleRemoveService,
     handleGenerate,
   };
 }
