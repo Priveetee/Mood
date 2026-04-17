@@ -61,10 +61,6 @@ export function filteredResultsPattern(userId: string) {
   return composePattern("results:filtered", [userId]);
 }
 
-export function publicServiceResultsKey(campaignId: number, token: string) {
-  return composeKey("service:public-results", [campaignId, token]);
-}
-
 export function publicServiceResultsPattern(campaignId: number) {
   return composePattern("service:public-results", [campaignId]);
 }
