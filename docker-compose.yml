@@ -2,7 +2,7 @@ name: ${COMPOSE_PROJECT_NAME:-mood}
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
@@ -11,7 +11,7 @@ services:
     ports:
       - "${POSTGRES_PORT:-5450}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
       - ./postgres-init:/docker-entrypoint-initdb.d
     networks:
       - mood_network
