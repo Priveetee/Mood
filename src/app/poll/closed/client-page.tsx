@@ -32,8 +32,8 @@ export default function PollClosedClientPage() {
   }, [authError, voted]);
 
   return (
-    <>
-      <div className="fixed top-0 left-0 -z-10 h-screen w-screen">
+    <div className="relative isolate min-h-screen">
+      <div className="pointer-events-none fixed inset-0 z-0">
         <FaultyTerminal
           tint="#45B056"
           scale={2.1}
@@ -50,7 +50,7 @@ export default function PollClosedClientPage() {
           flickerAmount={0}
         />
       </div>
-      <main className="flex min-h-screen flex-col items-center justify-start p-4 pt-32">
+      <main className="relative z-10 flex min-h-screen flex-col items-center justify-start p-4 pt-32">
         <Card className="w-full max-w-md rounded-2xl border-slate-800 bg-slate-900/80 text-white backdrop-blur-lg">
           <CardHeader>
             <CardTitle className="text-center text-3xl font-bold tracking-tight">
@@ -73,6 +73,6 @@ export default function PollClosedClientPage() {
           </CardContent>
         </Card>
       </main>
-    </>
+    </div>
   );
 }
