@@ -88,6 +88,7 @@ export default function ActiveCampaignsPage() {
         open={controller.isLinksDialogOpen}
         onOpenChange={controller.setIsLinksDialogOpen}
         campaignName={controller.selectedCampaignName}
+        campaignType={controller.selectedCampaignType}
         links={controller.linksQuery.data ?? []}
         isLoading={controller.linksQuery.isLoading}
         onCopyLink={copyToClipboard}
@@ -103,16 +104,17 @@ export default function ActiveCampaignsPage() {
           }
           sendLinksByEmail(controller.linksQuery.data, controller.selectedCampaignName);
         }}
-        onOpenAddManager={controller.openAddManagerDialog}
+        onOpenAddTarget={controller.openAddTargetDialog}
       />
 
       <AddManagerDialog
         open={controller.isAddManagerOpen}
         campaignName={controller.selectedCampaignName}
         managerName={controller.newManagerName}
-        isPending={controller.addManagerMutation.isPending}
+        isPending={controller.isAddTargetPending}
+        targetLabel={controller.selectedCampaignType === "MANAGER_LINKS" ? "manager" : "service"}
         onManagerNameChange={controller.setNewManagerName}
-        onSubmit={controller.handleAddManager}
+        onSubmit={controller.handleAddTarget}
         onOpenChange={(open) => {
           controller.setIsAddManagerOpen(open);
           if (!open) {

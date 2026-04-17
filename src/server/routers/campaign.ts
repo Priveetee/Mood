@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { addCampaignService } from "@/server/modules/campaign/add-service";
 import { createCampaign } from "@/server/modules/campaign/create";
 import {
   addCampaignManager,
@@ -7,6 +8,7 @@ import {
   setCampaignArchiveStatus,
 } from "@/server/modules/campaign/links";
 import { listCampaigns } from "@/server/modules/campaign/list";
+import { toggleCampaignPublicResults } from "@/server/modules/campaign/public-links";
 import { protectedProcedure, router } from "../trpc";
 
 export const campaignRouter = router({
@@ -39,6 +41,17 @@ export const campaignRouter = router({
       });
     }),
 
+  addService: protectedProcedure
+    .input(z.object({ campaignId: z.number(), serviceName: z.string() }))
+    .mutation(async ({ ctx, input }) =>
+      addCampaignService({
+        prisma: ctx.prisma,
+        campaignId: input.campaignId,
+        serviceName: input.serviceName,
+        userId: ctx.session.user.id,
+      }),
+    ),
+
   setArchiveStatus: protectedProcedure
     .input(z.object({ campaignId: z.number(), archived: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
@@ -50,13 +63,28 @@ export const campaignRouter = router({
       );
     }),
 
+  setPublicResults: protectedProcedure
+    .input(z.object({ campaignId: z.number(), enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) =>
+      toggleCampaignPublicResults({
+        prisma: ctx.prisma,
+        campaignId: input.campaignId,
+        userId: ctx.session.user.id,
+        enabled: input.enabled,
+        request: ctx.req,
+      }),
+    ),
+
   create: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1),
-        managers: z.array(z.string().min(1)),
+        campaignType: z.enum(["MANAGER_LINKS", "SERVICE_UNIQUE"]),
+        managers: z.array(z.string().min(1)).default([]),
+        services: z.array(z.string().min(1)).default([]),
         expiresAt: z.date().optional(),
         commentsRequired: z.boolean().optional().default(false),
+        allowMultipleVotes: z.boolean().optional().default(true),
       }),
     )
     .mutation(async ({ ctx, input }) =>
