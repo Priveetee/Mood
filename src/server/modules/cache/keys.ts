@@ -6,6 +6,7 @@ export const CACHE_TTL = {
   campaignLinksSeconds: 45,
   resultOptionsSeconds: 45,
   filteredResultsSeconds: 20,
+  publicResultsSeconds: 3,
 } as const;
 
 function composeKey(scope: string, parts: Array<string | number>) {
@@ -32,7 +33,7 @@ export function resultCampaignOptionsKey(userId: string) {
   return composeKey("results:campaign-options", [userId]);
 }
 
-export function resultManagerOptionsKey(userId: string, campaignId: number | "all") {
+export function resultManagerOptionsKey(userId: string, campaignId: number | string | "all") {
   return composeKey("results:manager-options", [userId, campaignId]);
 }
 
@@ -58,4 +59,12 @@ export function filteredResultsKey(
 
 export function filteredResultsPattern(userId: string) {
   return composePattern("results:filtered", [userId]);
+}
+
+export function publicServiceResultsKey(campaignId: number, token: string) {
+  return composeKey("service:public-results", [campaignId, token]);
+}
+
+export function publicServiceResultsPattern(campaignId: number) {
+  return composePattern("service:public-results", [campaignId]);
 }
