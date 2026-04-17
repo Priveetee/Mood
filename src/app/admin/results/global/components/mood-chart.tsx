@@ -1,6 +1,7 @@
 "use client";
 
 import { Cell, Pie, PieChart, type PieLabelRenderProps, type PieSectorDataItem } from "recharts";
+import { OpenMojiImage } from "@/components/openmoji-image";
 import {
   Card,
   CardContent,
@@ -20,7 +21,7 @@ interface MoodData {
   name: string;
   votes: number;
   fill: string;
-  emoji: string;
+  emojiCode: string;
 }
 
 interface MoodChartProps {
@@ -43,12 +44,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function getEmojiFromPayload(payload: unknown): string {
+function getEmojiCodeFromPayload(payload: unknown): string {
   if (!isRecord(payload)) {
-    return "";
+    return "1F610";
   }
-  const emoji = payload.emoji;
-  return typeof emoji === "string" ? emoji : "";
+  const emojiCode = payload.emojiCode;
+  return typeof emojiCode === "string" ? emojiCode : "1F610";
 }
 
 function getFillColor(item: PieSectorDataItem): string | null {
@@ -74,19 +75,12 @@ const CustomizedLabel = ({ cx, cy, midAngle, outerRadius, payload }: PieLabelRen
   const radius = outerRadius + 25;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  const emoji = getEmojiFromPayload(payload);
+  const emojiCode = getEmojiCodeFromPayload(payload);
 
   return (
-    <text
-      x={x}
-      y={y}
-      fill="white"
-      textAnchor={x > cx ? "start" : "end"}
-      dominantBaseline="central"
-      className="text-2xl"
-    >
-      {emoji}
-    </text>
+    <foreignObject x={x - 12} y={y - 12} width={24} height={24}>
+      <OpenMojiImage code={emojiCode} alt="Mood" size={24} className="h-6 w-6" />
+    </foreignObject>
   );
 };
 

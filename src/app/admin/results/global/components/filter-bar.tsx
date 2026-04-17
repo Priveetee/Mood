@@ -13,6 +13,8 @@ import {
 interface FilterBarProps {
   selectedCampaignId: number | "all";
   setSelectedCampaignId: (_id: number | "all") => void;
+  selectedSegmentType: "all" | "manager" | "service";
+  setSelectedSegmentType: (_type: "all" | "manager" | "service") => void;
   selectedManager: string | "all";
   setSelectedManager: (_manager: string | "all") => void;
   campaigns: Array<{ id: number; name: string }>;
@@ -25,6 +27,8 @@ interface FilterBarProps {
 export function FilterBar({
   selectedCampaignId,
   setSelectedCampaignId,
+  selectedSegmentType,
+  setSelectedSegmentType,
   selectedManager,
   setSelectedManager,
   campaigns,
@@ -35,7 +39,7 @@ export function FilterBar({
 }: FilterBarProps) {
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-slate-800 bg-slate-900 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
-      <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2 sm:gap-4">
+      <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-3 sm:gap-4">
         <Select
           value={selectedCampaignId.toString()}
           onValueChange={(id) => setSelectedCampaignId(id === "all" ? "all" : parseInt(id, 10))}
@@ -52,16 +56,26 @@ export function FilterBar({
             ))}
           </SelectContent>
         </Select>
+        <Select value={selectedSegmentType} onValueChange={setSelectedSegmentType}>
+          <SelectTrigger className="h-11 w-full border-slate-700 bg-slate-800 text-white sm:w-[220px]">
+            <SelectValue placeholder="Tous les types" />
+          </SelectTrigger>
+          <SelectContent className="border-slate-800 bg-slate-900 text-white">
+            <SelectItem value="all">Tous les types</SelectItem>
+            <SelectItem value="manager">Votes managers</SelectItem>
+            <SelectItem value="service">Votes services</SelectItem>
+          </SelectContent>
+        </Select>
         <Select
           value={selectedManager.toString()}
           onValueChange={(manager) => setSelectedManager(manager)}
           disabled={managers.length === 0}
         >
           <SelectTrigger className="h-11 w-full border-slate-700 bg-slate-800 text-white sm:w-[280px]">
-            <SelectValue placeholder="Tous les managers" />
+            <SelectValue placeholder="Tous les segments" />
           </SelectTrigger>
           <SelectContent className="border-slate-800 bg-slate-900 text-white">
-            <SelectItem value="all">Tous les managers</SelectItem>
+            <SelectItem value="all">Tous les segments</SelectItem>
             {managers.map((managerItem) => (
               <SelectItem key={managerItem} value={managerItem}>
                 {managerItem}

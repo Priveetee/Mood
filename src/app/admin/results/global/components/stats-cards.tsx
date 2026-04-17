@@ -1,4 +1,5 @@
 import { Users } from "lucide-react";
+import { OpenMojiImage } from "@/components/openmoji-image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StatCardProps {
@@ -30,7 +31,7 @@ function StatCard({ icon, title, value, onMouseEnter, onMouseLeave }: StatCardPr
 interface StatsCardsProps {
   totalVotes: number;
   dominantMood: string;
-  dominantMoodEmoji: string;
+  dominantMoodEmojiCode: string;
   onDominantMoodHover: () => void;
   onDominantMoodLeave: () => void;
 }
@@ -38,7 +39,7 @@ interface StatsCardsProps {
 export function StatsCards({
   totalVotes,
   dominantMood,
-  dominantMoodEmoji,
+  dominantMoodEmojiCode,
   onDominantMoodHover,
   onDominantMoodLeave,
 }: StatsCardsProps) {
@@ -50,7 +51,9 @@ export function StatsCards({
         value={totalVotes}
       />
       <StatCard
-        icon={<span className="text-2xl">{dominantMoodEmoji}</span>}
+        icon={
+          <OpenMojiImage code={dominantMoodEmojiCode} alt="Humeur" size={24} className="h-6 w-6" />
+        }
         title="Humeur Dominante"
         value={dominantMood}
         onMouseEnter={onDominantMoodHover}
