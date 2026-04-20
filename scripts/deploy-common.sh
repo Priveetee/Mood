@@ -112,3 +112,38 @@ apply_mood_env_overrides() {
     set_env_var "${env_file}" "NEXT_PUBLIC_APP_URL" "http://localhost:${web_port}"
   fi
 }
+
+create_postgres_backup() {
+  local env_file="$1"
+  local compose_file="$2"
+  local backup_dir="$3"
+  local pg_user="$4"
+  local pg_db="$5"
+
+  local stamp backup_file tmp_file
+  stamp="$(date -u +%Y%m%d_%H%M%S)"
+  mkdir -p "${backup_dir}"
+  backup_file="${backup_dir}/${pg_db}_${stamp}.dump"
+  tmp_file="${backup_file}.tmp"
+
+  if [[ -z "$(docker compose --env-file "${env_file}" -f "${compose_file}" ps -q postgres)" ]]; then
+    echo "[deploy] Postgres container not running, skipping backup" >&2
+    return 0
+  fi
+
+  docker compose --env-file "${env_file}" -f "${compose_file}" exec -T postgres \
+    pg_dump -U "${pg_user}" -d "${pg_db}" -Fc > "${tmp_file}"
+
+  if [[ ! -s "${tmp_file}" ]]; then
+    rm -f "${tmp_file}"
+    echo "[deploy] Backup failed: generated dump is empty" >&2
+    return 1
+  fi
+
+  mv "${tmp_file}" "${backup_file}"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "${backup_file}" > "${backup_file}.sha256"
+  fi
+
+  printf '%s' "${backup_file}"
+}

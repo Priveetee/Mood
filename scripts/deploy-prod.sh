@@ -121,15 +121,17 @@ if [[ "${NORMALIZED_DATABASE_URL}" != "${DATABASE_URL}" ]]; then
 fi
 
 mkdir -p "${ROOT_DIR}/backups"
-BACKUP_FILE="${ROOT_DIR}/backups/${POSTGRES_DB:-mood}_$(date +%F_%H%M%S).dump"
+BACKUP_FILE=""
 
 if [[ "${SKIP_BACKUP}" != "1" ]]; then
-  if [[ -n "$(docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps -q postgres)" ]]; then
-    docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T postgres \
-      pg_dump -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -Fc > "${BACKUP_FILE}"
+  BACKUP_FILE="$(create_postgres_backup \
+    "${ENV_FILE}" \
+    "${COMPOSE_FILE}" \
+    "${ROOT_DIR}/backups" \
+    "${POSTGRES_USER}" \
+    "${POSTGRES_DB}")"
+  if [[ -n "${BACKUP_FILE}" ]]; then
     echo "[deploy] Backup written to ${BACKUP_FILE}"
-  else
-    echo "[deploy] Postgres container not running, skipping backup"
   fi
 fi
 
